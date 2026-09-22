@@ -1,0 +1,61 @@
+{
+  "schema": 1,
+  "system": "BlackGold Commander",
+  "version": "2.0.0-dev",
+  "state": "CORE_VALIDATED_PRIVATE_QUEUE_STAGED_LOCAL_BOOTSTRAP_PENDING",
+  "date": "2026-09-22",
+  "public_repository": "ProjetosCosaNostra/CosaNostra-AI",
+  "development_branch": "blackgold-commander-v2",
+  "core": "control-plane/commander/BlackGold.Commander.Core.ps1",
+  "job_schema": "control-plane/commander/job.schema.json",
+  "status_tool": "control-plane/commander/Status-BlackGoldCommander.ps1",
+  "validation": {
+    "control_plane_ci": "PASS",
+    "commander_v2_ci": "PASS",
+    "free_form_shell": false,
+    "path_scope": "E:\\"
+  },
+  "capabilities": [
+    "status",
+    "fs_list",
+    "fs_read_text",
+    "fs_write_text",
+    "fs_mkdir",
+    "git_status",
+    "git_pull_ff",
+    "gradle",
+    "adb_devices",
+    "adb_install",
+    "adb_launch_package",
+    "emulator_start",
+    "logcat_tail"
+  ],
+  "private_transport": {
+    "repository_discovery_marker": "BLACKGOLD_COMMANDER_CONTROL.json",
+    "queue_path": "blackgold-commander/jobs",
+    "results_path": "blackgold-commander/results",
+    "branch": "blackgold-commander-v2",
+    "status": "STAGED"
+  },
+  "legacy_transport": {
+    "system": "BlackGold GitHub Runner",
+    "latest_observed_job_state": "QUEUED",
+    "desktop_commander_devices_observed": "OFFLINE",
+    "role_after_v2": "fallback"
+  },
+  "promotion_gate": [
+    "Bootstrap local Windows execution",
+    "Run status job end-to-end",
+    "Run filesystem read-only job",
+    "Run Android emulator job",
+    "Verify result persistence",
+    "Promote only after end-to-end PASS"
+  ],
+  "invariants": [
+    "Desktop Commander is not a required dependency.",
+    "No unrestricted remote shell.",
+    "No project path outside E:\\.",
+    "No visible CMD windows for project automation.",
+    "Do not promote to stable before local end-to-end validation."
+  ]
+}
