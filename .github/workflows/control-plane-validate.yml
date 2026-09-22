@@ -25,10 +25,15 @@ jobs:
 
           $required = @(
             'control-plane/BLACKGOLD_CONTROL_PLANE.md',
+            'control-plane/AGENT_ENTRYPOINT.md',
+            'control-plane/CURRENT_TRUTH.json',
+            'control-plane/PROJECT_REGISTRY.json',
             'control-plane/LATEST.json',
             'control-plane/manifest.json',
             'control-plane/project-pointer.json',
             'control-plane/policies/windows.json',
+            'control-plane/templates/AGENTS.md',
+            'control-plane/templates/control-plane.json',
             'control-plane/install.ps1',
             'control-plane/bootstrap.ps1',
             'control-plane/Update-BlackGoldControl.ps1',
@@ -48,11 +53,23 @@ jobs:
 
           $manifest = Get-Content 'control-plane/manifest.json' -Raw | ConvertFrom-Json
           $latest = Get-Content 'control-plane/LATEST.json' -Raw | ConvertFrom-Json
+          $truth = Get-Content 'control-plane/CURRENT_TRUTH.json' -Raw | ConvertFrom-Json
+          $registry = Get-Content 'control-plane/PROJECT_REGISTRY.json' -Raw | ConvertFrom-Json
           Get-Content 'control-plane/project-pointer.json' -Raw | ConvertFrom-Json | Out-Null
           Get-Content 'control-plane/policies/windows.json' -Raw | ConvertFrom-Json | Out-Null
+          Get-Content 'control-plane/templates/control-plane.json' -Raw | ConvertFrom-Json | Out-Null
 
           if ([string]$manifest.version -ne [string]$latest.version) {
             throw "Version mismatch: manifest=$($manifest.version) latest=$($latest.version)"
+          }
+          if ([string]$manifest.version -ne [string]$truth.version) {
+            throw "Version mismatch: manifest=$($manifest.version) current_truth=$($truth.version)"
+          }
+          if ($truth.state -ne 'ACTIVE') {
+            throw "CURRENT_TRUTH state must be ACTIVE"
+          }
+          if ($registry.repositories.Count -lt 1) {
+            throw "PROJECT_REGISTRY must contain at least one repository"
           }
 
           $scripts = Get-ChildItem 'control-plane' -Recurse -Filter '*.ps1' -File
@@ -77,8 +94,11 @@ jobs:
           if ($manifest.automatic_update -ne $true) {
             throw 'automatic_update must remain true'
           }
+          if ($manifest.project_registry_enabled -ne $true) {
+            throw 'project_registry_enabled must remain true'
+          }
           if ($manifest.secrets_allowed -ne $false) {
             throw 'secrets_allowed must remain false'
           }
 
-          Write-Host "BLACKGOLD_CONTROL_PLANE_VALIDATION_PASS version=$($manifest.version)"
+          Write-Host "BLACKGOLD_CONTROL_PLANE_VALIDATION_PASS version=$($manifest.version) repos=$($registry.repositories.Count)"
