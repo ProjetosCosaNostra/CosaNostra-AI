@@ -8,6 +8,7 @@ $TransactionPath = Join-Path $Root 'ControlPlane.transaction.json'
 
 $AgentPath = Join-Path $InstallRoot 'agent\BlackGold.Control.ps1'
 $ManifestPath = Join-Path $InstallRoot 'manifest.json'
+$InstallStatePath = Join-Path $InstallRoot 'install-state.json'
 $LogPath = Join-Path $InstallRoot 'logs\control-plane.log'
 
 $TaskName = 'BlackGold-ControlPlane'
@@ -19,12 +20,18 @@ $RunValueName = 'BlackGold-ControlPlane'
 $UpdateRunValueName = 'BlackGold-ControlPlane-Update'
 $DoctorRunValueName = 'BlackGold-ControlPlane-Doctor'
 
+$Repository = 'ProjetosCosaNostra/CosaNostra-AI'
 $StableRef = 'control-plane-stable'
-$Base = 'https://raw.githubusercontent.com/ProjetosCosaNostra/CosaNostra-AI/' + $StableRef + '/control-plane'
+$Headers = @{ 'User-Agent' = 'BlackGold-ControlPlane/1.6' }
 
 $manifest = $null
 if (Test-Path -LiteralPath $ManifestPath) {
     try { $manifest = Get-Content -LiteralPath $ManifestPath -Raw | ConvertFrom-Json } catch {}
+}
+
+$installState = $null
+if (Test-Path -LiteralPath $InstallStatePath) {
+    try { $installState = Get-Content -LiteralPath $InstallStatePath -Raw | ConvertFrom-Json } catch {}
 }
 
 $previousManifest = $null
@@ -61,13 +68,21 @@ $updateStartup = Resolve-Startup $updateTask $updateRunValue
 $doctorStartup = Resolve-Startup $doctorTask $doctorRunValue
 
 $remoteVersion = 'unknown'
+$stableCommit = ''
 try {
     $nonce = [DateTimeOffset]::UtcNow.ToUnixTimeSeconds()
-    $latest = Invoke-RestMethod -UseBasicParsing -Uri ($Base + '/LATEST.json?t=' + $nonce)
-    $remoteVersion = [string]$latest.version
+    $branchInfo = Invoke-RestMethod -UseBasicParsing -Headers $Headers -Uri ('https://api.github.com/repos/' + $Repository + '/branches/' + $StableRef + '?t=' + $nonce)
+    $stableCommit = [string]$branchInfo.commit.sha
+
+    if ($stableCommit -match '^[0-9a-f]{40}$') {
+        $PinnedBase = 'https://raw.githubusercontent.com/' + $Repository + '/' + $stableCommit + '/control-plane'
+        $latest = Invoke-RestMethod -UseBasicParsing -Uri ($PinnedBase + '/LATEST.json?t=' + $nonce)
+        $remoteVersion = [string]$latest.version
+    }
 } catch {}
 
 $localVersion = if ($manifest) { [string]$manifest.version } else { 'unknown' }
+$installedCommit = if ($installState) { [string]$installState.stable_commit } else { '' }
 $previousVersion = if ($previousManifest) { [string]$previousManifest.version } else { 'none' }
 
 $latestLog = ''
@@ -82,12 +97,21 @@ $transactionState = if ($transaction) { [string]$transaction.state } else { 'non
 $transactionMessage = if ($transaction) { [string]$transaction.message } else { '' }
 $transactionTimestamp = if ($transaction) { [string]$transaction.timestamp } else { '' }
 
+$commitMatch = [bool]($stableCommit -and $installedCommit -and ($stableCommit -eq $installedCommit))
+$integrityVerified = [bool]($installState -and $installState.integrity_verified)
+
 $state = [ordered]@{
     ready = [bool]((Test-Path -LiteralPath $AgentPath) -and $manifest -and ($startup -ne 'none'))
     version = $localVersion
     latest_version = $remoteVersion
-    update_required = [bool](($remoteVersion -ne 'unknown') -and ($localVersion -ne $remoteVersion))
+    update_required = [bool](($remoteVersion -ne 'unknown') -and (($localVersion -ne $remoteVersion) -or (-not $commitMatch)))
     stable_branch = $StableRef
+    stable_commit = $stableCommit
+    installed_commit = $installedCommit
+    commit_match = $commitMatch
+    integrity_verified = $integrityVerified
+    integrity_model = if ($installState) { [string]$installState.integrity_model } else { 'none' }
+    verified_file_count = if ($installState) { [int]$installState.verified_file_count } else { 0 }
     install_root = $InstallRoot
     startup = $startup
     updater = $updateStartup
