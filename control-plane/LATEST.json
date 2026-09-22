@@ -1,7 +1,7 @@
 {
   "schema": 1,
   "channel": "stable",
-  "version": "1.6.0",
+  "version": "1.7.0",
   "stable_branch": "control-plane-stable",
   "repository": "ProjetosCosaNostra/CosaNostra-AI",
   "bootstrap_url": "https://raw.githubusercontent.com/ProjetosCosaNostra/CosaNostra-AI/control-plane-stable/control-plane/bootstrap.ps1",
@@ -9,5 +9,6 @@
   "manifest_url": "https://raw.githubusercontent.com/ProjetosCosaNostra/CosaNostra-AI/control-plane-stable/control-plane/manifest.json",
   "current_truth_url": "https://raw.githubusercontent.com/ProjetosCosaNostra/CosaNostra-AI/control-plane-stable/control-plane/CURRENT_TRUTH.json",
   "project_registry_url": "https://raw.githubusercontent.com/ProjetosCosaNostra/CosaNostra-AI/control-plane-stable/control-plane/PROJECT_REGISTRY.json",
-  "integrity_model": "pinned_commit_git_blob_sha1"
+  "integrity_model": "pinned_commit_git_blob_sha1",
+  "github_runner_package_url": "https://raw.githubusercontent.com/ProjetosCosaNostra/CosaNostra-AI/control-plane-stable/control-plane/github-runner/README.md"
 }
