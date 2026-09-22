@@ -2,7 +2,7 @@
   "schema": 1,
   "system": "BlackGold Control Plane",
   "channel": "stable",
-  "version": "1.3.2",
+  "version": "1.4.0",
   "state": "ACTIVE",
   "canonical_repository": "ProjetosCosaNostra/CosaNostra-AI",
   "canonical_path": "control-plane",
@@ -36,5 +36,9 @@
     "public_registry_private_repository_names_omitted": true,
     "authenticated_private_registry_available": true,
     "public_files_must_not_expose_private_repository_names": true
-  }
+  },
+  "stable_branch": "control-plane-stable",
+  "release_model": "validated_branch_promotion",
+  "runtime_reads_stable_branch_only": true,
+  "release_invariant": "main changes are validated before promotion to control-plane-stable"
 }
