@@ -157,3 +157,9 @@ jobs:
           }
 
           Write-Host "BLACKGOLD_CONTROL_PLANE_VALIDATION_PASS version=$($manifest.version) repos=$($registry.repositories.Count)"
+
+
+      - name: Validate transactional model
+        shell: pwsh
+        run: |
+          & ./tests/Test-ControlPlaneTransaction.ps1
