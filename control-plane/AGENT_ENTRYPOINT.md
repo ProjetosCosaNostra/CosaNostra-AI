@@ -28,3 +28,13 @@ e ser incluído em `control-plane/PROJECT_REGISTRY.json`.
 
 A fonte de verdade é:
 `ProjetosCosaNostra/CosaNostra-AI/control-plane`.
+
+
+## Inventário privado
+
+O registro público nunca deve expor nomes de repositórios privados.
+
+Quando inventário completo for realmente necessário e houver um conector GitHub autenticado, procure pelo nome exato:
+`BLACKGOLD_PRIVATE_PROJECT_REGISTRY.json`
+
+Use esse inventário apenas dentro do contexto autenticado. Não copie nomes privados para arquivos públicos do Control Plane.
