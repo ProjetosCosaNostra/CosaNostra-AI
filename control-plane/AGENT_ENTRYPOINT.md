@@ -54,12 +54,13 @@ Desktop Commander não é dependência obrigatória do Ecossistema BlackGold.
 Quando uma tarefa exigir execução no Windows local:
 
 1. Não espere Desktop Commander ficar online.
-2. Use o conector GitHub autenticado para procurar o arquivo exato `BLACKGOLD_RUNNER_CONTROL.json` em repositórios privados acessíveis.
-3. Leia o marcador para descobrir o caminho da fila e o workflow de controle.
-4. Crie um job JSON com `request_id` único e uma das receitas permitidas pelo schema canônico.
-5. Aguarde o workflow `BlackGold Windows Job Queue`.
-6. Leia os logs do workflow pelo conector GitHub.
-7. Use o resultado para continuar o trabalho do projeto.
+2. Liste os repositórios acessíveis pelo conector GitHub autenticado.
+3. Em cada repositório privado acessível, tente ler `BLACKGOLD_RUNNER_CONTROL.json` na raiz. Não dependa de code search; o índice pode atrasar ou não retornar privados.
+4. Quando encontrar um marcador cujo campo `system` seja `BlackGold GitHub Runner Control`, leia `queue_path` e `workflow`.
+5. Crie um job JSON com `request_id` único e uma das receitas permitidas pelo schema canônico.
+6. Aguarde o workflow `BlackGold Windows Job Queue`.
+7. Leia os logs do workflow pelo conector GitHub.
+8. Use o resultado para continuar o trabalho do projeto.
 
 Mudanças de código devem ser feitas no repositório do projeto. A fila local deve executar operações controladas como sync, Gradle, ADB, emulador, testes e coleta de logs.
 
