@@ -28,6 +28,7 @@ jobs:
             'control-plane/AGENT_ENTRYPOINT.md',
             'control-plane/CURRENT_TRUTH.json',
             'control-plane/PROJECT_REGISTRY.json',
+            'control-plane/security/PUBLIC_PRIVATE_DATA_BOUNDARY.md',
             'control-plane/LATEST.json',
             'control-plane/manifest.json',
             'control-plane/project-pointer.json',
@@ -69,7 +70,13 @@ jobs:
             throw "CURRENT_TRUTH state must be ACTIVE"
           }
           if ($registry.repositories.Count -lt 1) {
-            throw "PROJECT_REGISTRY must contain at least one repository"
+            throw "PROJECT_REGISTRY must contain at least one public repository"
+          }
+          if ($registry.private_repository_names_omitted -ne $true) {
+            throw 'Public PROJECT_REGISTRY must omit private repository names'
+          }
+          if ($registry.registry_scope -ne 'public_discovery_only') {
+            throw 'Public PROJECT_REGISTRY registry_scope must remain public_discovery_only'
           }
 
           $scripts = Get-ChildItem 'control-plane' -Recurse -Filter '*.ps1' -File
