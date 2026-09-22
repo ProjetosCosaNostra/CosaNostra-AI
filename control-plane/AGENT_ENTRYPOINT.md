@@ -45,3 +45,22 @@ Use esse inventário apenas dentro do contexto autenticado. Não copie nomes pri
 Não desenvolver mudanças do Control Plane diretamente no canal estável.
 
 Use branch de trabalho, valide, mescle na `main` e só então promova o commit validado para `control-plane-stable`. O runtime local deve ler apenas o canal estável.
+
+
+## Execução remota pelo GitHub Runner
+
+Desktop Commander não é dependência obrigatória do Ecossistema BlackGold.
+
+Quando uma tarefa exigir execução no Windows local:
+
+1. Não espere Desktop Commander ficar online.
+2. Use o conector GitHub autenticado para procurar o arquivo exato `BLACKGOLD_RUNNER_CONTROL.json` em repositórios privados acessíveis.
+3. Leia o marcador para descobrir o caminho da fila e o workflow de controle.
+4. Crie um job JSON com `request_id` único e uma das receitas permitidas pelo schema canônico.
+5. Aguarde o workflow `BlackGold Windows Job Queue`.
+6. Leia os logs do workflow pelo conector GitHub.
+7. Use o resultado para continuar o trabalho do projeto.
+
+Mudanças de código devem ser feitas no repositório do projeto. A fila local deve executar operações controladas como sync, Gradle, ADB, emulador, testes e coleta de logs.
+
+Não criar shell arbitrário, scripts codificados em Base64 ou comandos livres dentro da fila.
