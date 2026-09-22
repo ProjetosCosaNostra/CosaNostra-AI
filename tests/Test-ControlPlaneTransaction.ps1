@@ -10,6 +10,8 @@ $registry = Get-Content (Join-Path $ControlPlane 'PROJECT_REGISTRY.json') -Raw |
 
 if ($manifest.transactional_install -ne $true) { throw 'transactional_install=false' }
 if ($manifest.rollback_enabled -ne $true) { throw 'rollback_enabled=false' }
+if ($manifest.commit_pinning -ne $true) { throw 'commit_pinning=false' }
+if ($manifest.git_blob_integrity -ne $true) { throw 'git_blob_integrity=false' }
 
 $versions = @(
   [string]$manifest.version,
@@ -32,7 +34,11 @@ $bootstrapTokens = @(
   'staged_validated',
   'activated_pending_healthcheck',
   'committed',
-  'rolled_back_after_failure'
+  'rolled_back_after_failure',
+  'PinnedCommit',
+  'Get-BGGitBlobSha',
+  'staged_integrity_verified',
+  'install-state.json'
 )
 foreach ($token in $bootstrapTokens) {
     if ($bootstrap -notmatch [regex]::Escape($token)) {

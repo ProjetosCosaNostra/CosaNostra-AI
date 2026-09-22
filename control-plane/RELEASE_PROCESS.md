@@ -43,3 +43,17 @@ Mesmo depois de uma versão alcançar `control-plane-stable`, o Windows:
 4. só então ativa a nova versão.
 
 Falhas de internet, arquivo vazio, JSON inválido, erro de sintaxe PowerShell ou falha de startup não devem destruir a última versão operacional.
+
+
+## Integridade do payload
+
+O release local deve ser preso ao commit exato promovido em `control-plane-stable`.
+
+O bootstrap:
+- resolve o SHA estável;
+- lê a árvore Git;
+- baixa pelo SHA imutável;
+- verifica cada arquivo contra seu Git blob;
+- registra `install-state.json`.
+
+O CI mantém um teste independente que compara a implementação PowerShell com `git hash-object` e prova que uma cópia adulterada recebe identidade diferente.

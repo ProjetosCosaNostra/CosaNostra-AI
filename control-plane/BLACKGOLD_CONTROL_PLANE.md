@@ -100,3 +100,21 @@ Fluxo:
 8. se qualquer etapa após a promoção falhar, restaurar automaticamente o slot anterior.
 
 O Doctor tenta rollback local antes de depender de download remoto quando identifica corrupção ou falha local da instalação.
+
+
+## Integridade por commit imutável
+
+A partir da v1.6.0, nenhuma instalação depende de uma branch móvel durante o download.
+
+Fluxo de integridade:
+1. resolver `control-plane-stable` para um SHA de commit exato;
+2. obter a árvore Git desse commit;
+3. baixar todos os arquivos usando o SHA imutável do commit;
+4. recalcular localmente a identidade Git blob de cada arquivo;
+5. comparar com o blob registrado na árvore Git;
+6. gravar `install-state.json` com commit, tree SHA e quantidade de arquivos verificados;
+7. somente depois permitir a promoção do staging para ativo.
+
+Se um arquivo estiver vazio, alterado ou não corresponder ao blob esperado, a transação falha antes de tocar na instalação ativa.
+
+Essa verificação usa a identidade de objeto Git do repositório e HTTPS. Ela é uma checagem de integridade/content-addressing, não uma assinatura criptográfica independente.

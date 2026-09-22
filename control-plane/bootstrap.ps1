@@ -1,7 +1,12 @@
+param(
+    [string]$PinnedCommit
+)
+
 $ErrorActionPreference = 'Stop'
 
+$Repository = 'ProjetosCosaNostra/CosaNostra-AI'
 $StableRef = 'control-plane-stable'
-$Base = 'https://raw.githubusercontent.com/ProjetosCosaNostra/CosaNostra-AI/' + $StableRef + '/control-plane'
+$Headers = @{ 'User-Agent' = 'BlackGold-ControlPlane/1.6' }
 
 $Root = Join-Path $env:LOCALAPPDATA 'BlackGold'
 $InstallRoot = Join-Path $Root 'ControlPlane'
@@ -10,10 +15,62 @@ $PreviousRoot = Join-Path $Root 'ControlPlane.__previous'
 $TransactionPath = Join-Path $Root 'ControlPlane.transaction.json'
 
 $nonce = [DateTimeOffset]::UtcNow.ToUnixTimeSeconds()
-$latest = Invoke-RestMethod -UseBasicParsing -Uri ($Base + '/LATEST.json?t=' + $nonce)
+
+if (-not $PinnedCommit) {
+    $branchInfo = Invoke-RestMethod -UseBasicParsing -Headers $Headers -Uri ('https://api.github.com/repos/' + $Repository + '/branches/' + $StableRef + '?t=' + $nonce)
+    $PinnedCommit = [string]$branchInfo.commit.sha
+}
+
+if ($PinnedCommit -notmatch '^[0-9a-f]{40}$') {
+    throw 'Pinned stable commit is invalid.'
+}
+
+$commitInfo = Invoke-RestMethod -UseBasicParsing -Headers $Headers -Uri ('https://api.github.com/repos/' + $Repository + '/commits/' + $PinnedCommit + '?t=' + $nonce)
+$TreeSha = [string]$commitInfo.commit.tree.sha
+if ($TreeSha -notmatch '^[0-9a-f]{40}$') {
+    throw 'Could not resolve Git tree for pinned commit.'
+}
+
+$treeInfo = Invoke-RestMethod -UseBasicParsing -Headers $Headers -Uri ('https://api.github.com/repos/' + $Repository + '/git/trees/' + $TreeSha + '?recursive=1&t=' + $nonce)
+if ($treeInfo.truncated -eq $true) {
+    throw 'Git tree response was truncated; integrity verification cannot continue.'
+}
+
+$blobMap = @{}
+foreach ($entry in $treeInfo.tree) {
+    if ($entry.type -eq 'blob') {
+        $blobMap[[string]$entry.path] = [string]$entry.sha
+    }
+}
+
+$PinnedBase = 'https://raw.githubusercontent.com/' + $Repository + '/' + $PinnedCommit + '/control-plane'
+$latest = Invoke-RestMethod -UseBasicParsing -Uri ($PinnedBase + '/LATEST.json?t=' + $nonce)
 $Version = [string]$latest.version
 $swapped = $false
 $previousVersion = $null
+
+function Get-BGGitBlobSha {
+    param([Parameter(Mandatory=$true)][string]$Path)
+
+    $bytes = [System.IO.File]::ReadAllBytes($Path)
+    $header = [System.Text.Encoding]::ASCII.GetBytes(('blob ' + [string]$bytes.Length))
+
+    $stream = New-Object System.IO.MemoryStream
+    $sha1 = [System.Security.Cryptography.SHA1]::Create()
+
+    try {
+        $stream.Write($header, 0, $header.Length)
+        $stream.WriteByte(0)
+        $stream.Write($bytes, 0, $bytes.Length)
+        $stream.Position = 0
+
+        return (($sha1.ComputeHash($stream) | ForEach-Object { $_.ToString('x2') }) -join '')
+    }
+    finally {
+        $sha1.Dispose()
+        $stream.Dispose()
+    }
+}
 
 function Write-BGTransaction([string]$State,[string]$Message) {
     New-Item -ItemType Directory -Force -Path $Root | Out-Null
@@ -21,6 +78,8 @@ function Write-BGTransaction([string]$State,[string]$Message) {
         schema = 1
         state = $State
         version = $Version
+        stable_commit = $PinnedCommit
+        tree_sha = $TreeSha
         previous_version = $previousVersion
         message = $Message
         timestamp = (Get-Date).ToString('o')
@@ -46,7 +105,8 @@ function Test-BGStage {
         'PROJECT_REGISTRY.json',
         'project-pointer.json',
         'policies/windows.json',
-        'templates/control-plane.json'
+        'templates/control-plane.json',
+        'install-state.json'
     )
 
     foreach ($relative in $jsonFiles) {
@@ -59,15 +119,22 @@ function Test-BGStage {
     $latestLocal = Get-Content -LiteralPath (Join-Path $Path 'LATEST.json') -Raw -Encoding UTF8 | ConvertFrom-Json
     $truth = Get-Content -LiteralPath (Join-Path $Path 'CURRENT_TRUTH.json') -Raw -Encoding UTF8 | ConvertFrom-Json
     $registry = Get-Content -LiteralPath (Join-Path $Path 'PROJECT_REGISTRY.json') -Raw -Encoding UTF8 | ConvertFrom-Json
+    $installState = Get-Content -LiteralPath (Join-Path $Path 'install-state.json') -Raw -Encoding UTF8 | ConvertFrom-Json
 
-    foreach ($candidate in @([string]$manifest.version,[string]$latestLocal.version,[string]$truth.version,[string]$registry.control_plane_version)) {
+    foreach ($candidate in @([string]$manifest.version,[string]$latestLocal.version,[string]$truth.version,[string]$registry.control_plane_version,[string]$installState.version)) {
         if ($candidate -ne $Version) {
             throw "Staged version mismatch. Expected $Version, found $candidate"
         }
     }
 
+    if ([string]$installState.stable_commit -ne $PinnedCommit) { throw 'Install state commit mismatch.' }
+    if ([string]$installState.tree_sha -ne $TreeSha) { throw 'Install state tree mismatch.' }
+    if ($installState.integrity_verified -ne $true) { throw 'Install state is not integrity verified.' }
+
     if ($manifest.transactional_install -ne $true) { throw 'transactional_install must be true' }
     if ($manifest.rollback_enabled -ne $true) { throw 'rollback_enabled must be true' }
+    if ($manifest.commit_pinning -ne $true) { throw 'commit_pinning must be true' }
+    if ($manifest.git_blob_integrity -ne $true) { throw 'git_blob_integrity must be true' }
     if ($manifest.stable_branch -ne 'control-plane-stable') { throw 'stable_branch mismatch' }
 
     $scripts = Get-ChildItem -LiteralPath $Path -Recurse -Filter '*.ps1' -File
@@ -122,23 +189,54 @@ try {
         } catch {}
     }
 
-    Write-BGTransaction 'staging' 'Downloading stable payload.'
+    Write-BGTransaction 'staging' 'Downloading pinned stable payload with Git blob verification.'
 
     if (Test-Path -LiteralPath $StageRoot) {
         Remove-Item -LiteralPath $StageRoot -Recurse -Force
     }
     New-Item -ItemType Directory -Force -Path $StageRoot | Out-Null
 
+    $verifiedCount = 0
+
     foreach ($relative in $files) {
+        $repoPath = 'control-plane/' + $relative
+        $expectedBlob = [string]$blobMap[$repoPath]
+
+        if ($expectedBlob -notmatch '^[0-9a-f]{40}$') {
+            throw "No Git blob identity found for $repoPath"
+        }
+
         $target = Join-Path $StageRoot ($relative -replace '/', '\')
         New-Item -ItemType Directory -Force -Path (Split-Path $target -Parent) | Out-Null
-        Invoke-WebRequest -UseBasicParsing -Uri ($Base + '/' + $relative + '?v=' + $Version + '&t=' + $nonce) -OutFile $target
+
+        Invoke-WebRequest -UseBasicParsing -Uri ($PinnedBase + '/' + $relative + '?v=' + $Version + '&t=' + $nonce) -OutFile $target
         if ((Get-Item -LiteralPath $target).Length -le 0) { throw "Downloaded empty file: $relative" }
+
+        $actualBlob = Get-BGGitBlobSha -Path $target
+        if ($actualBlob -ne $expectedBlob) {
+            throw "Git blob integrity mismatch for $relative expected=$expectedBlob actual=$actualBlob"
+        }
+
         Unblock-File -LiteralPath $target -ErrorAction SilentlyContinue
+        $verifiedCount++
     }
 
+    $installState = [ordered]@{
+        schema = 1
+        version = $Version
+        stable_branch = $StableRef
+        stable_commit = $PinnedCommit
+        tree_sha = $TreeSha
+        integrity_model = 'pinned_commit_git_blob_sha1'
+        integrity_verified = $true
+        verified_file_count = $verifiedCount
+        installed_at = (Get-Date).ToString('o')
+    }
+    $installState | ConvertTo-Json -Depth 4 | Set-Content -LiteralPath (Join-Path $StageRoot 'install-state.json') -Encoding UTF8
+
     Test-BGStage -Path $StageRoot
-    Write-BGTransaction 'staged_validated' 'All staged files passed validation.'
+    Write-BGTransaction 'staged_integrity_verified' ('Verified files=' + $verifiedCount)
+    Write-BGTransaction 'staged_validated' 'All staged files passed integrity and structural validation.'
 
     foreach ($taskName in @('BlackGold-ControlPlane','BlackGold-ControlPlane-Update','BlackGold-ControlPlane-Doctor')) {
         Get-ScheduledTask -TaskName $taskName -ErrorAction SilentlyContinue | Stop-ScheduledTask -ErrorAction SilentlyContinue
@@ -158,7 +256,7 @@ try {
 
     Move-Item -LiteralPath $StageRoot -Destination $InstallRoot
     $swapped = $true
-    Write-BGTransaction 'activated_pending_healthcheck' 'Staged slot promoted to active.'
+    Write-BGTransaction 'activated_pending_healthcheck' 'Integrity-verified staging slot promoted to active.'
 
     if (Test-Path -LiteralPath (Join-Path $PreviousRoot 'logs')) {
         Copy-Item -LiteralPath (Join-Path $PreviousRoot 'logs') -Destination (Join-Path $InstallRoot 'logs') -Recurse -Force -ErrorAction SilentlyContinue
@@ -176,11 +274,17 @@ try {
     if (-not $task -and -not $runValue) { throw 'BlackGold startup was not registered after activation.' }
 
     $activeManifest = Get-Content -LiteralPath (Join-Path $InstallRoot 'manifest.json') -Raw -Encoding UTF8 | ConvertFrom-Json
-    if ([string]$activeManifest.version -ne $Version) { throw 'Active version does not match staged version.' }
+    $activeState = Get-Content -LiteralPath (Join-Path $InstallRoot 'install-state.json') -Raw -Encoding UTF8 | ConvertFrom-Json
 
-    Write-BGTransaction 'committed' 'Transaction committed; previous slot preserved for rollback.'
+    if ([string]$activeManifest.version -ne $Version) { throw 'Active version does not match staged version.' }
+    if ([string]$activeState.stable_commit -ne $PinnedCommit) { throw 'Active commit does not match pinned stable commit.' }
+    if ($activeState.integrity_verified -ne $true) { throw 'Active integrity state is not verified.' }
+
+    Write-BGTransaction 'committed' ('Transaction committed at immutable commit ' + $PinnedCommit)
 
     Write-Output ('BLACKGOLD_CONTROL_PLANE_READY version=' + $Version)
+    Write-Output ('StableCommit=' + $PinnedCommit)
+    Write-Output ('VerifiedFiles=' + $verifiedCount)
     Write-Output ('InstallRoot=' + $InstallRoot)
     Write-Output ('PreviousVersion=' + $(if ($previousVersion) { $previousVersion } else { 'none' }))
     if ($task) { Write-Output ('Startup=ScheduledTask/' + $task.TaskName) }

@@ -2,7 +2,7 @@
   "schema": 1,
   "ecosystem": "BlackGold",
   "control_plane_repository": "ProjetosCosaNostra/CosaNostra-AI",
-  "control_plane_version": "1.5.0",
+  "control_plane_version": "1.6.0",
   "policy_channel": "stable",
   "registry_scope": "public_discovery_only",
   "private_repository_names_omitted": true,

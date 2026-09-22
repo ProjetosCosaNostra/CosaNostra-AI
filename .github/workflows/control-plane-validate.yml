@@ -4,11 +4,13 @@ on:
   push:
     paths:
       - 'control-plane/**'
+      - 'tests/**'
       - '.github/workflows/control-plane-validate.yml'
       - '.github/workflows/control-plane-promote-stable.yml'
   pull_request:
     paths:
       - 'control-plane/**'
+      - 'tests/**'
       - '.github/workflows/control-plane-validate.yml'
       - '.github/workflows/control-plane-promote-stable.yml'
   workflow_dispatch:
@@ -123,6 +125,15 @@ jobs:
           if ($manifest.rollback_enabled -ne $true) {
             throw 'rollback_enabled must remain true'
           }
+          if ($manifest.commit_pinning -ne $true) {
+            throw 'commit_pinning must remain true'
+          }
+          if ($manifest.git_blob_integrity -ne $true) {
+            throw 'git_blob_integrity must remain true'
+          }
+          if ($manifest.immutable_downloads -ne $true) {
+            throw 'immutable_downloads must remain true'
+          }
           if ($manifest.rollback -ne 'Rollback-BlackGoldControl.ps1') {
             throw 'rollback script must remain canonical'
           }
@@ -147,7 +158,7 @@ jobs:
           }
 
           $bootstrapText = Get-Content 'control-plane/bootstrap.ps1' -Raw
-          foreach ($requiredToken in @('ControlPlane.__staging','ControlPlane.__previous','staged_validated','rolled_back_after_failure')) {
+          foreach ($requiredToken in @('ControlPlane.__staging','ControlPlane.__previous','staged_validated','rolled_back_after_failure','PinnedCommit','Get-BGGitBlobSha','install-state.json','staged_integrity_verified')) {
             if ($bootstrapText -notmatch [regex]::Escape($requiredToken)) {
               throw "Transactional bootstrap token missing: $requiredToken"
             }
@@ -169,3 +180,9 @@ jobs:
         shell: pwsh
         run: |
           & ./tests/Test-ControlPlaneTransactionE2E.ps1
+
+
+      - name: Validate pinned commit Git blob integrity
+        shell: pwsh
+        run: |
+          & ./tests/Test-ControlPlaneIntegrity.ps1

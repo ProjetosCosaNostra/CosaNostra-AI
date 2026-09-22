@@ -61,7 +61,7 @@ Get-ChildItem -Path $LogDir -Filter '*.log' -File -ErrorAction SilentlyContinue 
     Where-Object { $_.LastWriteTime -lt (Get-Date).AddDays(-[int]$policy.log_retention_days) } |
     Remove-Item -Force -ErrorAction SilentlyContinue
 
-Write-BGLog ('agent-start version=1.5.0 user=' + $env:USERNAME)
+Write-BGLog ('agent-start version=1.6.0 user=' + $env:USERNAME)
 
 while ($true) {
     if (((Get-Date) - $lastPolicyRead).TotalSeconds -ge [int]$policy.refresh_policy_seconds) {

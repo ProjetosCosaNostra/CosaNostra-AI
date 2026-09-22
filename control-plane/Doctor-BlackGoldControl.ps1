@@ -61,6 +61,15 @@ if (-not $state) {
         $localFailure = $true
         $reasons.Add('transaction_failed')
     }
+    if (-not $state.integrity_verified) {
+        $needsRepair = $true
+        $localFailure = $true
+        $reasons.Add('integrity_unverified')
+    }
+    if ($state.stable_commit -and $state.installed_commit -and (-not $state.commit_match)) {
+        $needsRepair = $true
+        $reasons.Add('commit_drift')
+    }
 }
 
 if (-not $needsRepair) {
