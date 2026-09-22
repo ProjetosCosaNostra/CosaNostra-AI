@@ -1,0 +1,48 @@
+name: BlackGold Commander V2 Validate
+
+on:
+  push:
+    branches:
+      - blackgold-commander-v2
+    paths:
+      - 'control-plane/commander/**'
+      - '.github/workflows/blackgold-commander-v2-validate.yml'
+  pull_request:
+    paths:
+      - 'control-plane/commander/**'
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Validate commander JSON
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          Get-Content 'control-plane/commander/job.schema.json' -Raw | ConvertFrom-Json | Out-Null
+          Write-Host 'COMMANDER_SCHEMA_OK'
+
+      - name: Enforce safety invariants
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $schema = Get-Content 'control-plane/commander/job.schema.json' -Raw
+          $forbidden = @(
+            '"shell"',
+            '"command"',
+            '"powershell"',
+            '"cmd"',
+            '"bash"',
+            '"script"'
+          )
+          foreach ($needle in $forbidden) {
+            if ($schema.ToLowerInvariant().Contains($needle)) {
+              throw ('Forbidden free-form execution field in schema: ' + $needle)
+            }
+          }
+          Write-Host 'COMMANDER_SAFETY_INVARIANTS_OK'
