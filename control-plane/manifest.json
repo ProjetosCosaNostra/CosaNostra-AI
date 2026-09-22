@@ -1,7 +1,7 @@
 {
   "schema": 1,
   "name": "BlackGold Control Plane",
-  "version": "1.5.0",
+  "version": "1.6.0",
   "channel": "stable",
   "repository": "ProjetosCosaNostra/CosaNostra-AI",
   "base_raw_url": "https://raw.githubusercontent.com/ProjetosCosaNostra/CosaNostra-AI/control-plane-stable/control-plane",
@@ -39,5 +39,10 @@
   "rollback": "Rollback-BlackGoldControl.ps1",
   "staging_slot": "%LOCALAPPDATA%\\BlackGold\\ControlPlane.__staging",
   "previous_slot": "%LOCALAPPDATA%\\BlackGold\\ControlPlane.__previous",
-  "transaction_journal": "%LOCALAPPDATA%\\BlackGold\\ControlPlane.transaction.json"
+  "transaction_journal": "%LOCALAPPDATA%\\BlackGold\\ControlPlane.transaction.json",
+  "commit_pinning": true,
+  "git_blob_integrity": true,
+  "integrity_model": "pinned_commit_git_blob_sha1",
+  "immutable_downloads": true,
+  "install_state": "install-state.json"
 }
