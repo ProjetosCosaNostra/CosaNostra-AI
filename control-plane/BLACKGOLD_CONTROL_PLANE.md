@@ -77,3 +77,26 @@ Fluxo:
 5. instalação, update, reparo, status e Doctor leem apenas `control-plane-stable`.
 
 Isso elimina downloads de versões parcialmente atualizadas.
+
+
+## Instalação transacional
+
+A partir da v1.5.0, o Control Plane não atualiza mais a instalação ativa arquivo por arquivo.
+
+Slots locais:
+- `ControlPlane`: instalação ativa.
+- `ControlPlane.__staging`: versão em preparação.
+- `ControlPlane.__previous`: última versão ativa conhecida e preservada para rollback.
+- `ControlPlane.transaction.json`: journal da última transação.
+
+Fluxo:
+1. baixar todos os arquivos do canal estável para staging;
+2. validar JSONs, coerência de versão e sintaxe de todos os scripts PowerShell;
+3. interromper somente os componentes do próprio Control Plane;
+4. mover a instalação ativa para o slot anterior;
+5. promover staging para ativo;
+6. registrar agente/updater/Doctor e executar health check;
+7. marcar a transação como committed;
+8. se qualquer etapa após a promoção falhar, restaurar automaticamente o slot anterior.
+
+O Doctor tenta rollback local antes de depender de download remoto quando identifica corrupção ou falha local da instalação.

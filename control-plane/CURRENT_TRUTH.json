@@ -2,7 +2,7 @@
   "schema": 1,
   "system": "BlackGold Control Plane",
   "channel": "stable",
-  "version": "1.4.0",
+  "version": "1.5.0",
   "state": "ACTIVE",
   "canonical_repository": "ProjetosCosaNostra/CosaNostra-AI",
   "canonical_path": "control-plane",
@@ -17,7 +17,10 @@
     "automatic_update": true,
     "self_heal": true,
     "doctor": true,
-    "doctor_startup_check": true
+    "doctor_startup_check": true,
+    "transactional_install": true,
+    "local_rollback": true,
+    "preserve_previous_slot": true
   },
   "required_project_markers": [
     "AGENTS.md",
@@ -40,5 +43,7 @@
   "stable_branch": "control-plane-stable",
   "release_model": "validated_branch_promotion",
   "runtime_reads_stable_branch_only": true,
-  "release_invariant": "main changes are validated before promotion to control-plane-stable"
+  "release_invariant": "main changes are validated before promotion to control-plane-stable",
+  "installation_model": "transactional_staging_atomic_swap",
+  "rollback_model": "local_last_known_good"
 }
