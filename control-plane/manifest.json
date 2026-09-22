@@ -1,7 +1,7 @@
 {
   "schema": 1,
   "name": "BlackGold Control Plane",
-  "version": "1.4.0",
+  "version": "1.5.0",
   "channel": "stable",
   "repository": "ProjetosCosaNostra/CosaNostra-AI",
   "base_raw_url": "https://raw.githubusercontent.com/ProjetosCosaNostra/CosaNostra-AI/control-plane-stable/control-plane",
@@ -33,5 +33,11 @@
   "security_policy": "security/PUBLIC_PRIVATE_DATA_BOUNDARY.md",
   "doctor": "Doctor-BlackGoldControl.ps1",
   "doctor_task": "BlackGold-ControlPlane-Doctor",
-  "self_heal_doctor": true
+  "self_heal_doctor": true,
+  "transactional_install": true,
+  "rollback_enabled": true,
+  "rollback": "Rollback-BlackGoldControl.ps1",
+  "staging_slot": "%LOCALAPPDATA%\\BlackGold\\ControlPlane.__staging",
+  "previous_slot": "%LOCALAPPDATA%\\BlackGold\\ControlPlane.__previous",
+  "transaction_journal": "%LOCALAPPDATA%\\BlackGold\\ControlPlane.transaction.json"
 }
