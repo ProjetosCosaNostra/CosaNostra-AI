@@ -186,10 +186,12 @@ $files = @(
   'github-runner/defaults.json',
   'github-runner/Install-BlackGoldGitHubRunner.ps1',
   'github-runner/Start-BlackGoldGitHubRunner.ps1',
+  'github-runner/Watchdog-BlackGoldGitHubRunner.ps1',
   'github-runner/Status-BlackGoldGitHubRunner.ps1',
   'github-runner/Uninstall-BlackGoldGitHubRunner.ps1',
   'github-runner/Invoke-BlackGoldRunnerJob.ps1',
-  'github-runner/job.schema.json'
+  'github-runner/job.schema.json',
+  'tools/Open-OrcamentoNoPonto.ps1'
 )
 
 try {
