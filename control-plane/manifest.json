@@ -1,0 +1,14 @@
+{
+  "schema": 1,
+  "name": "BlackGold Control Plane",
+  "version": "1.0.0",
+  "repository": "ProjetosCosaNostra/CosaNostra-AI",
+  "base_raw_url": "https://raw.githubusercontent.com/ProjetosCosaNostra/CosaNostra-AI/main/control-plane",
+  "install_root": "%LOCALAPPDATA%\\BlackGold\\ControlPlane",
+  "scheduled_task": "BlackGold-ControlPlane",
+  "policy": "policies/windows.json",
+  "agent": "agent/BlackGold.Control.ps1",
+  "contract": "BLACKGOLD_CONTROL_PLANE.md",
+  "cmd_policy": "hide_visible_cmd",
+  "secrets_allowed": false
+}
