@@ -6,6 +6,7 @@ $PreviousRoot = Join-Path $Root 'ControlPlane.__previous'
 $StatusPath = Join-Path $InstallRoot 'Status-BlackGoldControl.ps1'
 $RepairPath = Join-Path $InstallRoot 'Repair-BlackGoldControl.ps1'
 $RollbackPath = Join-Path $InstallRoot 'Rollback-BlackGoldControl.ps1'
+$RunnerRepairPath = Join-Path $InstallRoot 'Repair-GitHubActionsRunners.ps1'
 
 Start-Sleep -Seconds 5
 
@@ -25,6 +26,11 @@ function Invoke-BGScript([string]$Path) {
         & ([ScriptBlock]::Create($source)) | Out-Null
         return $true
     } catch { return $false }
+}
+
+$runnerRepairOk = $true
+if (Test-Path -LiteralPath $RunnerRepairPath) {
+    $runnerRepairOk = Invoke-BGScript $RunnerRepairPath
 }
 
 $state = Invoke-BGScriptJson $StatusPath
@@ -73,7 +79,7 @@ if (-not $state) {
 }
 
 if (-not $needsRepair) {
-    Write-Output ('BLACKGOLD_DOCTOR_OK version=' + [string]$state.version)
+    Write-Output ('BLACKGOLD_DOCTOR_OK version=' + [string]$state.version + ' runner_repair=' + [string]$runnerRepairOk)
     exit 0
 }
 
