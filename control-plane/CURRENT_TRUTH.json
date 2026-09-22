@@ -26,5 +26,8 @@
     "Do not kill required CMD build subprocesses just to hide their windows.",
     "Use the canonical control plane instead of duplicating global execution rules.",
     "New repositories must be registered in PROJECT_REGISTRY.json."
-  ]
+  ],
+  "registered_repository_count": 10,
+  "github_markers_synced": true,
+  "discovery_model": "AGENTS.md + .blackgold/control-plane.json + central PROJECT_REGISTRY.json"
 }
