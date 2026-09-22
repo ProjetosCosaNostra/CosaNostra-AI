@@ -63,7 +63,7 @@ if ($executor -notmatch [regex]::Escape("Only E:\ paths are allowed.")) {
 }
 
 $ops = @($schema.properties.op.enum)
-foreach ($requiredOp in @('status','git_status','git_sync','gradle','adb_devices','adb_install','adb_launch','emulator_start','logcat_tail')) {
+foreach ($requiredOp in @('status','git_status','git_sync','gradle','adb_devices','adb_install','adb_launch','adb_launch_package','emulator_start','logcat_tail')) {
     if ($ops -notcontains $requiredOp) {
         throw ('Missing controlled operation: ' + $requiredOp)
     }
@@ -137,4 +137,18 @@ foreach ($token in @('github_runner','remote_execution_ready','desktop_commander
 $runnerInstaller = Get-Content -LiteralPath (Join-Path $pkg 'Install-BlackGoldGitHubRunner.ps1') -Raw
 if ($runnerInstaller -notmatch [regex]::Escape('[switch]$NonInteractive')) {
   throw 'Runner installer must support non-interactive background mode.'
+}
+
+
+foreach ($token in @(
+  'Assert-Serial',
+  'Invalid emulator port.',
+  'wait_boot_sec',
+  'android.intent.category.LAUNCHER',
+  'Target serial is occupied by another AVD.',
+  'AVD identity mismatch.'
+)) {
+  if ($executor -notmatch [regex]::Escape($token)) {
+    throw ('Runner Android targeting invariant missing: ' + $token)
+  }
 }
