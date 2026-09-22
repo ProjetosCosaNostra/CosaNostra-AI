@@ -163,3 +163,9 @@ jobs:
         shell: pwsh
         run: |
           & ./tests/Test-ControlPlaneTransaction.ps1
+
+
+      - name: Exercise Windows transaction swap and rollback
+        shell: pwsh
+        run: |
+          & ./tests/Test-ControlPlaneTransactionE2E.ps1
