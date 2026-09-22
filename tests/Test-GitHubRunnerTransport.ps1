@@ -101,3 +101,40 @@ foreach ($token in @(
     throw ('Runner discovery entrypoint invariant missing: ' + $token)
   }
 }
+
+
+$bootstrap = Get-Content -LiteralPath (Join-Path $root 'control-plane\bootstrap.ps1') -Raw
+foreach ($token in @(
+  'github-runner/README.md',
+  'github-runner/defaults.json',
+  'github-runner/Install-BlackGoldGitHubRunner.ps1',
+  'github-runner/Status-BlackGoldGitHubRunner.ps1',
+  'github-runner/job.schema.json'
+)) {
+  if ($bootstrap -notmatch [regex]::Escape($token)) {
+    throw ('Bootstrap runner package invariant missing: ' + $token)
+  }
+}
+
+$install = Get-Content -LiteralPath (Join-Path $root 'control-plane\install.ps1') -Raw
+foreach ($token in @(
+  'Install-BlackGoldGitHubRunner.ps1',
+  'BLACKGOLD_GITHUB_RUNNER_PENDING',
+  'NonInteractive'
+)) {
+  if ($install -notmatch [regex]::Escape($token)) {
+    throw ('Permanent installer runner integration missing: ' + $token)
+  }
+}
+
+$status = Get-Content -LiteralPath (Join-Path $root 'control-plane\Status-BlackGoldControl.ps1') -Raw
+foreach ($token in @('github_runner','remote_execution_ready','desktop_commander_required')) {
+  if ($status -notmatch [regex]::Escape($token)) {
+    throw ('Control Plane status runner integration missing: ' + $token)
+  }
+}
+
+$runnerInstaller = Get-Content -LiteralPath (Join-Path $pkg 'Install-BlackGoldGitHubRunner.ps1') -Raw
+if ($runnerInstaller -notmatch [regex]::Escape('[switch]$NonInteractive')) {
+  throw 'Runner installer must support non-interactive background mode.'
+}
