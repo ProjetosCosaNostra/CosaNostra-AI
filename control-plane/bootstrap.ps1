@@ -55,17 +55,20 @@ function Get-BGGitBlobSha {
     $bytes = [System.IO.File]::ReadAllBytes($Path)
     $header = [System.Text.Encoding]::ASCII.GetBytes(('blob ' + [string]$bytes.Length))
 
-    $payload = New-Object byte[] ($header.Length + 1 + $bytes.Length)
-    [System.Array]::Copy($header, 0, $payload, 0, $header.Length)
-    $payload[$header.Length] = 0
-    [System.Array]::Copy($bytes, 0, $payload, $header.Length + 1, $bytes.Length)
-
+    $stream = New-Object System.IO.MemoryStream
     $sha1 = [System.Security.Cryptography.SHA1]::Create()
+
     try {
-        return (($sha1.ComputeHash($payload) | ForEach-Object { $_.ToString('x2') }) -join '')
+        $stream.Write($header, 0, $header.Length)
+        $stream.WriteByte(0)
+        $stream.Write($bytes, 0, $bytes.Length)
+        $stream.Position = 0
+
+        return (($sha1.ComputeHash($stream) | ForEach-Object { $_.ToString('x2') }) -join '')
     }
     finally {
         $sha1.Dispose()
+        $stream.Dispose()
     }
 }
 
