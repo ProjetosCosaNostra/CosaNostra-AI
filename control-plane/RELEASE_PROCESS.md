@@ -30,3 +30,16 @@ Se uma versão promovida apresentar defeito, mover `control-plane-stable` para o
 - `LATEST.json`, `manifest.json`, `CURRENT_TRUTH.json` e `PROJECT_REGISTRY.json` usam a mesma versão.
 - Nomes de repositórios privados não entram no registro público.
 - Estar na `main` não significa estar em produção; produção significa estar em `control-plane-stable`.
+
+
+## Transação local
+
+A promoção no GitHub e a instalação no Windows são duas barreiras independentes.
+
+Mesmo depois de uma versão alcançar `control-plane-stable`, o Windows:
+1. baixa para `ControlPlane.__staging`;
+2. valida integralmente;
+3. preserva `ControlPlane` como `ControlPlane.__previous`;
+4. só então ativa a nova versão.
+
+Falhas de internet, arquivo vazio, JSON inválido, erro de sintaxe PowerShell ou falha de startup não devem destruir a última versão operacional.
