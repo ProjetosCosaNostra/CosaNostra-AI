@@ -36,8 +36,13 @@ Invoke-BGLocalScript (Join-Path $InstallRoot 'agent\Register-BlackGoldControl.ps
 Invoke-BGLocalScript (Join-Path $InstallRoot 'Register-BlackGoldProjects.ps1')
 
 $task = Get-ScheduledTask -TaskName 'BlackGold-ControlPlane' -ErrorAction SilentlyContinue
-if (-not $task) { throw 'BlackGold Control Plane task was not registered.' }
+$runValue = Get-ItemPropertyValue -Path 'HKCU:\Software\Microsoft\Windows\CurrentVersion\Run' -Name 'BlackGold-ControlPlane' -ErrorAction SilentlyContinue
+
+if (-not $task -and -not $runValue) {
+    throw 'BlackGold Control Plane startup was not registered.'
+}
 
 Write-Output 'BLACKGOLD_CONTROL_PLANE_READY'
 Write-Output ('InstallRoot=' + $InstallRoot)
-Write-Output ('Task=' + $task.TaskName)
+if ($task) { Write-Output ('Startup=ScheduledTask/' + $task.TaskName) }
+elseif ($runValue) { Write-Output 'Startup=HKCU/Run' }
