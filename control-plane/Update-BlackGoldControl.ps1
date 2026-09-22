@@ -8,6 +8,18 @@ $LocalManifestPath = Join-Path $InstallRoot 'manifest.json'
 $InstallStatePath = Join-Path $InstallRoot 'install-state.json'
 $nonce = [DateTimeOffset]::UtcNow.ToUnixTimeSeconds()
 
+function Invoke-BGDoctor {
+    $doctorPath = Join-Path $InstallRoot 'Doctor-BlackGoldControl.ps1'
+    if (-not (Test-Path -LiteralPath $doctorPath)) { return }
+
+    try {
+        Unblock-File -LiteralPath $doctorPath -ErrorAction SilentlyContinue
+        $doctorSource = Get-Content -LiteralPath $doctorPath -Raw -Encoding UTF8
+        & ([ScriptBlock]::Create($doctorSource)) | Out-Null
+    }
+    catch {}
+}
+
 $branchInfo = Invoke-RestMethod -UseBasicParsing -Headers $Headers -Uri ('https://api.github.com/repos/' + $Repository + '/branches/' + $StableRef + '?t=' + $nonce)
 $StableCommit = [string]$branchInfo.commit.sha
 if ($StableCommit -notmatch '^[0-9a-f]{40}$') { throw 'Could not resolve immutable stable commit.' }
@@ -34,9 +46,13 @@ if (Test-Path -LiteralPath $InstallStatePath) {
 
 if (($localVersion -eq [string]$remote.version) -and ($localCommit -eq $StableCommit)) {
     Write-Output ('BLACKGOLD_CONTROL_PLANE_UP_TO_DATE version=' + $localVersion + ' commit=' + $StableCommit)
+    Invoke-BGDoctor
     exit 0
 }
 
 Write-Output ('BLACKGOLD_CONTROL_PLANE_UPDATE ' + $localVersion + ' -> ' + [string]$remote.version + ' commit=' + $StableCommit)
 $bootstrapSource = (Invoke-WebRequest -UseBasicParsing -Uri ($PinnedBase + '/bootstrap.ps1?v=' + $remote.version + '&t=' + $nonce)).Content
 & ([ScriptBlock]::Create($bootstrapSource)) -PinnedCommit $StableCommit
+
+
+Invoke-BGDoctor
