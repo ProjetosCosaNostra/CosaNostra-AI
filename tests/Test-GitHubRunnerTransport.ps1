@@ -8,6 +8,7 @@ $required = @(
   'defaults.json',
   'Install-BlackGoldGitHubRunner.ps1',
   'Start-BlackGoldGitHubRunner.ps1',
+  'Watchdog-BlackGoldGitHubRunner.ps1',
   'Status-BlackGoldGitHubRunner.ps1',
   'Uninstall-BlackGoldGitHubRunner.ps1',
   'Invoke-BlackGoldRunnerJob.ps1',
@@ -181,5 +182,27 @@ $updater = Get-Content -LiteralPath (Join-Path $root 'control-plane\Update-Black
 foreach ($token in @('function Invoke-BGDoctor','Doctor-BlackGoldControl.ps1','Invoke-BGDoctor')) {
   if ($updater -notmatch [regex]::Escape($token)) {
     throw ('Updater Doctor chaining invariant missing: ' + $token)
+  }
+}
+
+
+$supervisor = Get-Content -LiteralPath (Join-Path $pkg 'Start-BlackGoldGitHubRunner.ps1') -Raw
+foreach ($token in @('while ($true)','runner child exited code=','Start-Sleep -Seconds $RetrySeconds')) {
+  if ($supervisor -notmatch [regex]::Escape($token)) {
+    throw ('Persistent runner supervisor invariant missing: ' + $token)
+  }
+}
+
+$watchdog = Get-Content -LiteralPath (Join-Path $pkg 'Watchdog-BlackGoldGitHubRunner.ps1') -Raw
+foreach ($token in @('BlackGold-GitHubRunner','Runner.Listener','Start-ScheduledTask')) {
+  if ($watchdog -notmatch [regex]::Escape($token)) {
+    throw ('Runner watchdog invariant missing: ' + $token)
+  }
+}
+
+$launcher = Get-Content -LiteralPath (Join-Path $root 'control-plane\tools\Open-OrcamentoNoPonto.ps1') -Raw
+foreach ($token in @('Orcamento_no_Ponto_API35','assembleDebug','install -r','android.intent.category.LAUNCHER','OPEN_ORCAMENTO_NO_PONTO_RECEIPT.json')) {
+  if ($launcher -notmatch [regex]::Escape($token)) {
+    throw ('Orcamento launcher invariant missing: ' + $token)
   }
 }
