@@ -7,7 +7,7 @@ Fonte de verdade global do Ecossistema BlackGold para Windows, projetos e agente
 1. Nunca abrir janelas visíveis de CMD para automações do ecossistema.
 2. Processos necessários devem continuar executando; janelas de `cmd.exe` são ocultadas, não encerradas.
 3. PowerShell e processos auxiliares devem usar modo oculto/background quando tecnicamente possível.
-4. Nenhum projeto deve depender de um serviço remoto de desktop para executar sua rotina local.
+4. Nenhum projeto deve depender de serviço remoto de desktop para executar sua rotina local.
 5. Este repositório é a fonte de verdade do Control Plane. Não duplicar regras em código de projeto.
 6. Cada projeto deve conter um ponteiro `.blackgold/control-plane.json` ou `AGENTS.md` apontando para este contrato.
 7. Após formatação do PC, reinstalar o agente local pelo bootstrap canônico; nenhuma cópia manual é necessária.
@@ -19,31 +19,38 @@ Fonte de verdade global do Ecossistema BlackGold para Windows, projetos e agente
 - `policies/windows.json`: política do Windows.
 - `bootstrap.ps1`: reinstala/atualiza o agente local.
 - `agent/BlackGold.Control.ps1`: agente residente oculto.
-- `agent/Register-BlackGoldControl.ps1`: registra a tarefa de logon.
-- `agent/Uninstall-BlackGoldControl.ps1`: remove somente o agente e sua tarefa.
-- `project-pointer.json`: ponteiro que pode ser copiado para `.blackgold/control-plane.json`.
+- `agent/Register-BlackGoldControl.ps1`: registra inicialização e fallback do usuário.
+- `agent/Uninstall-BlackGoldControl.ps1`: remove a inicialização do agente.
+- `Register-BlackGoldProjects.ps1`: registra projetos locais do ecossistema.
+- `Status-BlackGoldControl.ps1`: diagnóstico canônico de saúde.
+- `Repair-BlackGoldControl.ps1`: reinstala/repara a partir do GitHub.
+- `project-pointer.json`: ponteiro para `.blackgold/control-plane.json`.
 
 ## Regra de CMD
 
-O modo padrão é `hide_visible_cmd`. O agente enumera janelas de `cmd.exe` na sessão atual e aplica SW_HIDE. O processo não é morto.
+O modo padrão é `hide_visible_cmd`.
 
-Isso preserva:
-- Gradle/Android builds;
-- scripts .bat/.cmd;
-- subprocessos de ferramentas;
-- automações existentes.
+O agente:
+- detecta janelas visíveis de `cmd.exe`;
+- aplica `SW_HIDE` sem encerrar o processo;
+- preserva Gradle, Android builds, scripts .bat/.cmd e subprocessos;
+- registra PID, processo pai e linha de comando para descobrir a origem;
+- mantém logs locais com retenção configurável.
 
-A janela deixa de roubar foco ou cobrir o trabalho.
+## Autorreparo
+
+O modo preferencial usa a tarefa `BlackGold-ControlPlane` no logon com reinício automático.
+Se o Agendador não puder ser usado, o sistema registra fallback em `HKCU\Software\Microsoft\Windows\CurrentVersion\Run`.
+
+O comando de reparo sempre baixa novamente a versão canônica do GitHub e reaplica o bootstrap.
 
 ## Persistência
 
-O estado canônico vive no GitHub. O componente local vive em:
+O estado canônico vive no GitHub.
+O componente local vive em:
 `%LOCALAPPDATA%\BlackGold\ControlPlane`
 
-A tarefa:
-`BlackGold-ControlPlane`
-
-inicia o agente em PowerShell oculto no logon do usuário.
+Após formatação, o repositório continua sendo a fonte de verdade e o bootstrap reconstrói o componente local.
 
 ## Uso por agentes/chats
 
@@ -52,4 +59,4 @@ Ao trabalhar em qualquer projeto BlackGold, procurar primeiro por:
 2. `AGENTS.md`
 3. este contrato canônico no GitHub
 
-Esses arquivos declaram que as regras globais têm precedência sobre automações locais, salvo instrução explícita do usuário no projeto atual.
+Esses arquivos declaram as regras globais de execução do ecossistema. Alterações locais não devem reintroduzir CMD visível.
