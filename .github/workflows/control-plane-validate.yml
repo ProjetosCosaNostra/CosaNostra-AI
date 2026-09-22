@@ -44,6 +44,7 @@ jobs:
             'control-plane/Status-BlackGoldControl.ps1',
             'control-plane/Repair-BlackGoldControl.ps1',
             'control-plane/Doctor-BlackGoldControl.ps1',
+            'control-plane/Rollback-BlackGoldControl.ps1',
             'control-plane/agent/BlackGold.Control.ps1',
             'control-plane/agent/Register-BlackGoldControl.ps1',
             'control-plane/agent/Uninstall-BlackGoldControl.ps1'
@@ -116,6 +117,15 @@ jobs:
           if ($manifest.runtime_reads_stable_branch_only -ne $true) {
             throw 'runtime_reads_stable_branch_only must remain true'
           }
+          if ($manifest.transactional_install -ne $true) {
+            throw 'transactional_install must remain true'
+          }
+          if ($manifest.rollback_enabled -ne $true) {
+            throw 'rollback_enabled must remain true'
+          }
+          if ($manifest.rollback -ne 'Rollback-BlackGoldControl.ps1') {
+            throw 'rollback script must remain canonical'
+          }
           if ($manifest.stable_branch -ne 'control-plane-stable') {
             throw 'stable_branch must remain control-plane-stable'
           }
@@ -133,6 +143,13 @@ jobs:
             $runtimeText = Get-Content $runtimeFile -Raw
             if ($runtimeText -match 'ProjetosCosaNostra/CosaNostra-AI/main/control-plane') {
               throw "Runtime file reads main instead of stable: $runtimeFile"
+            }
+          }
+
+          $bootstrapText = Get-Content 'control-plane/bootstrap.ps1' -Raw
+          foreach ($requiredToken in @('ControlPlane.__staging','ControlPlane.__previous','staged_validated','rolled_back_after_failure')) {
+            if ($bootstrapText -notmatch [regex]::Escape($requiredToken)) {
+              throw "Transactional bootstrap token missing: $requiredToken"
             }
           }
           if ($manifest.secrets_allowed -ne $false) {
