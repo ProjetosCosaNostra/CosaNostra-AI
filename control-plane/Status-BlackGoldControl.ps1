@@ -3,11 +3,16 @@ $InstallRoot = Join-Path $env:LOCALAPPDATA 'BlackGold\ControlPlane'
 $AgentPath = Join-Path $InstallRoot 'agent\BlackGold.Control.ps1'
 $ManifestPath = Join-Path $InstallRoot 'manifest.json'
 $LogPath = Join-Path $InstallRoot 'logs\control-plane.log'
+
 $TaskName = 'BlackGold-ControlPlane'
 $UpdateTaskName = 'BlackGold-ControlPlane-Update'
+$DoctorTaskName = 'BlackGold-ControlPlane-Doctor'
+
 $RunKey = 'HKCU:\Software\Microsoft\Windows\CurrentVersion\Run'
 $RunValueName = 'BlackGold-ControlPlane'
 $UpdateRunValueName = 'BlackGold-ControlPlane-Update'
+$DoctorRunValueName = 'BlackGold-ControlPlane-Doctor'
+
 $Base = 'https://raw.githubusercontent.com/ProjetosCosaNostra/CosaNostra-AI/main/control-plane'
 
 $manifest = $null
@@ -17,20 +22,25 @@ if (Test-Path -LiteralPath $ManifestPath) {
 
 $task = Get-ScheduledTask -TaskName $TaskName -ErrorAction SilentlyContinue
 $updateTask = Get-ScheduledTask -TaskName $UpdateTaskName -ErrorAction SilentlyContinue
+$doctorTask = Get-ScheduledTask -TaskName $DoctorTaskName -ErrorAction SilentlyContinue
+
 $runValue = Get-ItemPropertyValue -Path $RunKey -Name $RunValueName -ErrorAction SilentlyContinue
 $updateRunValue = Get-ItemPropertyValue -Path $RunKey -Name $UpdateRunValueName -ErrorAction SilentlyContinue
+$doctorRunValue = Get-ItemPropertyValue -Path $RunKey -Name $DoctorRunValueName -ErrorAction SilentlyContinue
 
 $agentProcess = Get-CimInstance Win32_Process -Filter "Name = 'powershell.exe'" -ErrorAction SilentlyContinue |
     Where-Object { $_.CommandLine -and $_.CommandLine -like '*BlackGold.Control.ps1*' } |
     Select-Object -First 1
 
-$startup = 'none'
-if ($task) { $startup = 'ScheduledTask' }
-elseif ($runValue) { $startup = 'HKCU/Run' }
+function Resolve-Startup($Task,$RunValue) {
+    if ($Task) { return 'ScheduledTask' }
+    if ($RunValue) { return 'HKCU/Run' }
+    return 'none'
+}
 
-$updateStartup = 'none'
-if ($updateTask) { $updateStartup = 'ScheduledTask' }
-elseif ($updateRunValue) { $updateStartup = 'HKCU/Run' }
+$startup = Resolve-Startup $task $runValue
+$updateStartup = Resolve-Startup $updateTask $updateRunValue
+$doctorStartup = Resolve-Startup $doctorTask $doctorRunValue
 
 $remoteVersion = 'unknown'
 try {
@@ -57,6 +67,7 @@ $state = [ordered]@{
     install_root = $InstallRoot
     startup = $startup
     updater = $updateStartup
+    doctor = $doctorStartup
     agent_running = [bool]$agentProcess
     agent_pid = if ($agentProcess) { [int]$agentProcess.ProcessId } else { $null }
     latest_log = $latestLog
