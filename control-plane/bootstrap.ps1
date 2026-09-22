@@ -32,7 +32,8 @@ $files = @(
   'agent/Uninstall-BlackGoldControl.ps1',
   'Register-BlackGoldProjects.ps1',
   'Status-BlackGoldControl.ps1',
-  'Repair-BlackGoldControl.ps1'
+  'Repair-BlackGoldControl.ps1',
+  'Doctor-BlackGoldControl.ps1'
 )
 
 New-Item -ItemType Directory -Force -Path $InstallRoot | Out-Null
