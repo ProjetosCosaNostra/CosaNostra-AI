@@ -46,7 +46,7 @@ if ($needsRepair) {
         $repairSource = Get-Content -LiteralPath $RepairPath -Raw -Encoding UTF8
         & ([ScriptBlock]::Create($repairSource))
     } else {
-        $url = 'https://raw.githubusercontent.com/ProjetosCosaNostra/CosaNostra-AI/main/control-plane/install.ps1'
+        $url = 'https://raw.githubusercontent.com/ProjetosCosaNostra/CosaNostra-AI/control-plane-stable/control-plane/install.ps1'
         $remote = (Invoke-WebRequest -UseBasicParsing -Uri ($url + '?doctor=' + [DateTimeOffset]::UtcNow.ToUnixTimeSeconds())).Content
         & ([ScriptBlock]::Create($remote))
     }
