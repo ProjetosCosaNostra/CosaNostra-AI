@@ -152,3 +152,34 @@ foreach ($token in @(
     throw ('Runner Android targeting invariant missing: ' + $token)
   }
 }
+
+
+foreach ($token in @(
+  'Try-GhAuthFromGitCredential',
+  'credential fill',
+  '--with-token',
+  'GCM_INTERACTIVE'
+)) {
+  if ($runnerInstaller -notmatch [regex]::Escape($token)) {
+    throw ('Runner credential-recovery invariant missing: ' + $token)
+  }
+}
+
+$doctor = Get-Content -LiteralPath (Join-Path $root 'control-plane\Doctor-BlackGoldControl.ps1') -Raw
+foreach ($token in @(
+  'Install-BlackGoldGitHubRunner.ps1',
+  '-NonInteractive',
+  'BLACKGOLD_DOCTOR_RUNNER_READY',
+  'BLACKGOLD_DOCTOR_RUNNER_PENDING'
+)) {
+  if ($doctor -notmatch [regex]::Escape($token)) {
+    throw ('Doctor runner self-heal invariant missing: ' + $token)
+  }
+}
+
+$updater = Get-Content -LiteralPath (Join-Path $root 'control-plane\Update-BlackGoldControl.ps1') -Raw
+foreach ($token in @('function Invoke-BGDoctor','Doctor-BlackGoldControl.ps1','Invoke-BGDoctor')) {
+  if ($updater -notmatch [regex]::Escape($token)) {
+    throw ('Updater Doctor chaining invariant missing: ' + $token)
+  }
+}

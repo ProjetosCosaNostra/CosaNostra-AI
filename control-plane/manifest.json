@@ -1,7 +1,7 @@
 {
   "schema": 1,
   "name": "BlackGold Control Plane",
-  "version": "1.7.3",
+  "version": "1.7.4",
   "channel": "stable",
   "repository": "ProjetosCosaNostra/CosaNostra-AI",
   "base_raw_url": "https://raw.githubusercontent.com/ProjetosCosaNostra/CosaNostra-AI/control-plane-stable/control-plane",
@@ -55,5 +55,7 @@
   "github_runner_status_integrated": true,
   "github_runner_background_login_forbidden": true,
   "github_runner_android_targeting": "serial_port_avd_verified",
-  "github_runner_package_launch": true
+  "github_runner_package_launch": true,
+  "github_runner_doctor_self_heal": true,
+  "github_runner_git_credential_recovery": true
 }
