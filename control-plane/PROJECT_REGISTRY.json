@@ -2,7 +2,12 @@
   "schema": 1,
   "ecosystem": "BlackGold",
   "control_plane_repository": "ProjetosCosaNostra/CosaNostra-AI",
+  "control_plane_version": "1.3.0",
   "policy_channel": "stable",
+  "registry_scope": "public_discovery_only",
+  "private_repository_names_omitted": true,
+  "private_repository_count": 5,
+  "authenticated_private_registry_available": true,
   "repositories": [
     {
       "repository": "ProjetosCosaNostra/politica-de-privacidade",
@@ -20,27 +25,7 @@
       "registered": true
     },
     {
-      "repository": "ProjetosCosaNostra/MajestySpeak",
-      "default_branch": "main",
-      "registered": true
-    },
-    {
-      "repository": "ProjetosCosaNostra/Consigliere--Aladdin",
-      "default_branch": "main",
-      "registered": true
-    },
-    {
-      "repository": "ProjetosCosaNostra/BlackVault_Sentinel",
-      "default_branch": "main",
-      "registered": true
-    },
-    {
       "repository": "ProjetosCosaNostra/FitNexus_Coach_BlackGold",
-      "default_branch": "main",
-      "registered": true
-    },
-    {
-      "repository": "ProjetosCosaNostra/Aeterna",
       "default_branch": "main",
       "registered": true
     },
@@ -48,22 +33,12 @@
       "repository": "ProjetosCosaNostra/BlackVault_Sentinel_Releases",
       "default_branch": "main",
       "registered": true
-    },
-    {
-      "repository": "ProjetosCosaNostra/Junior_Resolve",
-      "default_branch": "main",
-      "registered": true
     }
   ],
+  "registered_repository_count": 10,
   "required_markers": [
     "AGENTS.md",
     ".blackgold/control-plane.json"
   ],
-  "future_repo_rule": "Every new BlackGold repository must receive both required markers and be added to this registry.",
-  "control_plane_version": "1.3.0",
-  "registered_repository_count": 10,
-  "markers_required": [
-    "AGENTS.md",
-    ".blackgold/control-plane.json"
-  ]
+  "future_repo_rule": "Every new BlackGold repository must receive both required markers. Public repositories may be listed here; private repository names must remain in the authenticated private registry."
 }
