@@ -1,0 +1,12 @@
+{
+  "schema": 1,
+  "policy_id": "BG-WINDOWS-GLOBAL-001",
+  "hide_visible_cmd": true,
+  "kill_cmd_processes": false,
+  "hide_powershell": false,
+  "poll_interval_ms": 250,
+  "refresh_policy_seconds": 60,
+  "log_retention_days": 7,
+  "log_level": "info",
+  "notes": "CMD windows are hidden, never killed. This preserves build and automation subprocesses."
+}
