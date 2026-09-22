@@ -2,7 +2,7 @@
   "schema": 1,
   "system": "BlackGold Control Plane",
   "channel": "stable",
-  "version": "1.6.0",
+  "version": "1.7.0",
   "state": "ACTIVE",
   "canonical_repository": "ProjetosCosaNostra/CosaNostra-AI",
   "canonical_path": "control-plane",
@@ -33,7 +33,8 @@
     "Do not open visible CMD windows for ecosystem automation.",
     "Do not kill required CMD build subprocesses just to hide their windows.",
     "Use the canonical control plane instead of duplicating global execution rules.",
-    "New repositories must be registered in PROJECT_REGISTRY.json."
+    "New repositories must be registered in PROJECT_REGISTRY.json.",
+    "Do not wait for Desktop Commander availability when GitHub Runner transport is available."
   ],
   "registered_repository_count": 10,
   "github_markers_synced": true,
@@ -50,5 +51,12 @@
   "installation_model": "transactional_staging_atomic_swap",
   "rollback_model": "local_last_known_good",
   "integrity_model": "pinned_commit_git_blob_sha1",
-  "immutable_downloads": true
+  "immutable_downloads": true,
+  "remote_execution": {
+    "preferred_transport": "github-actions-self-hosted-runner",
+    "control_marker": "BLACKGOLD_RUNNER_CONTROL.json",
+    "queue_visibility": "private",
+    "desktop_commander_required": false,
+    "rule": "Do not wait for Desktop Commander. Use the authenticated GitHub Runner queue when local Windows execution is required."
+  }
 }
