@@ -88,3 +88,16 @@ finally {
 }
 
 Write-Host 'BLACKGOLD_GITHUB_RUNNER_TRANSPORT_PASS'
+
+
+$entry = Get-Content -LiteralPath (Join-Path $root 'control-plane\AGENT_ENTRYPOINT.md') -Raw
+foreach ($token in @(
+  'BLACKGOLD_RUNNER_CONTROL.json',
+  'Liste os repositórios acessíveis',
+  'Não dependa de code search',
+  'BlackGold GitHub Runner Control'
+)) {
+  if ($entry -notmatch [regex]::Escape($token)) {
+    throw ('Runner discovery entrypoint invariant missing: ' + $token)
+  }
+}
