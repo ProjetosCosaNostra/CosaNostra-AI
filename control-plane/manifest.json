@@ -1,11 +1,17 @@
 {
   "schema": 1,
   "name": "BlackGold Control Plane",
-  "version": "1.1.0",
+  "version": "1.2.0",
+  "channel": "stable",
   "repository": "ProjetosCosaNostra/CosaNostra-AI",
   "base_raw_url": "https://raw.githubusercontent.com/ProjetosCosaNostra/CosaNostra-AI/main/control-plane",
+  "latest": "LATEST.json",
+  "install": "install.ps1",
+  "bootstrap": "bootstrap.ps1",
+  "update": "Update-BlackGoldControl.ps1",
   "install_root": "%LOCALAPPDATA%\\BlackGold\\ControlPlane",
   "scheduled_task": "BlackGold-ControlPlane",
+  "update_task": "BlackGold-ControlPlane-Update",
   "startup_fallback": "HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\Run",
   "policy": "policies/windows.json",
   "agent": "agent/BlackGold.Control.ps1",
@@ -15,5 +21,6 @@
   "cmd_policy": "hide_visible_cmd",
   "trace_cmd_origin": true,
   "self_heal_startup": true,
+  "automatic_update": true,
   "secrets_allowed": false
 }
