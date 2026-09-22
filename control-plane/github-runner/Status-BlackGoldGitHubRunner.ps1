@@ -3,6 +3,7 @@ $ErrorActionPreference = 'SilentlyContinue'
 $RunnerRoot = 'E:\BlackGold_GitHub_Runner'
 $StatePath = Join-Path $RunnerRoot 'BLACKGOLD_RUNNER_STATE.json'
 $TaskName = 'BlackGold-GitHubRunner'
+$WatchdogTaskName = 'BlackGold-GitHubRunner-Watchdog'
 
 $state = $null
 if (Test-Path -LiteralPath $StatePath) {
@@ -10,6 +11,7 @@ if (Test-Path -LiteralPath $StatePath) {
 }
 
 $task = Get-ScheduledTask -TaskName $TaskName -ErrorAction SilentlyContinue
+$watchdogTask = Get-ScheduledTask -TaskName $WatchdogTaskName -ErrorAction SilentlyContinue
 $listener = Get-Process -Name 'Runner.Listener' -ErrorAction SilentlyContinue | Select-Object -First 1
 
 $serverStatus = ''
@@ -36,6 +38,8 @@ if ($state -and $state.control_repository) {
     runner_version = if ($state) { [string]$state.runner_version } else { '' }
     runner_root = $RunnerRoot
     startup = if ($task) { 'ScheduledTask' } else { 'none' }
+    watchdog = if ($watchdogTask) { 'ScheduledTask' } else { 'none' }
+    watchdog_task_state = if ($watchdogTask) { [string]$watchdogTask.State } else { 'missing' }
     listener_running = [bool]$listener
     listener_pid = if ($listener) { [int]$listener.Id } else { $null }
     server_status = $serverStatus
