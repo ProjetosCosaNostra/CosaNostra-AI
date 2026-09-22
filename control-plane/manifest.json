@@ -1,7 +1,7 @@
 {
   "schema": 1,
   "name": "BlackGold Control Plane",
-  "version": "1.0.1",
+  "version": "1.1.0",
   "repository": "ProjetosCosaNostra/CosaNostra-AI",
   "base_raw_url": "https://raw.githubusercontent.com/ProjetosCosaNostra/CosaNostra-AI/main/control-plane",
   "install_root": "%LOCALAPPDATA%\\BlackGold\\ControlPlane",
@@ -9,7 +9,11 @@
   "startup_fallback": "HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\Run",
   "policy": "policies/windows.json",
   "agent": "agent/BlackGold.Control.ps1",
+  "status": "Status-BlackGoldControl.ps1",
+  "repair": "Repair-BlackGoldControl.ps1",
   "contract": "BLACKGOLD_CONTROL_PLANE.md",
   "cmd_policy": "hide_visible_cmd",
+  "trace_cmd_origin": true,
+  "self_heal_startup": true,
   "secrets_allowed": false
 }
