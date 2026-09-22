@@ -6,6 +6,7 @@ $PreviousRoot = Join-Path $Root 'ControlPlane.__previous'
 $StatusPath = Join-Path $InstallRoot 'Status-BlackGoldControl.ps1'
 $RepairPath = Join-Path $InstallRoot 'Repair-BlackGoldControl.ps1'
 $RollbackPath = Join-Path $InstallRoot 'Rollback-BlackGoldControl.ps1'
+$RunnerInstallerPath = Join-Path $InstallRoot 'github-runner\Install-BlackGoldGitHubRunner.ps1'
 
 Start-Sleep -Seconds 5
 
@@ -69,6 +70,32 @@ if (-not $state) {
     if ($state.stable_commit -and $state.installed_commit -and (-not $state.commit_match)) {
         $needsRepair = $true
         $reasons.Add('commit_drift')
+    }
+}
+
+if ($state -and (-not $state.remote_execution_ready) -and (Test-Path -LiteralPath $RunnerInstallerPath)) {
+    try {
+        $runnerSource = Get-Content -LiteralPath $RunnerInstallerPath -Raw -Encoding UTF8
+        $runnerOutput = & ([ScriptBlock]::Create($runnerSource)) -NonInteractive | Out-String
+
+        if ($runnerOutput) {
+            Write-Output ($runnerOutput.Trim())
+        }
+
+        Start-Sleep -Seconds 2
+        $refreshedState = Invoke-BGScriptJson $StatusPath
+        if ($refreshedState) {
+            $state = $refreshedState
+        }
+
+        if ($state.remote_execution_ready) {
+            Write-Output 'BLACKGOLD_DOCTOR_RUNNER_READY'
+        } else {
+            Write-Output 'BLACKGOLD_DOCTOR_RUNNER_PENDING'
+        }
+    }
+    catch {
+        Write-Output ('BLACKGOLD_DOCTOR_RUNNER_PENDING ' + $_.Exception.Message)
     }
 }
 
