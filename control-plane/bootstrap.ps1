@@ -53,12 +53,12 @@ function Get-BGGitBlobSha {
     param([Parameter(Mandatory=$true)][string]$Path)
 
     $bytes = [System.IO.File]::ReadAllBytes($Path)
-    $prefix = [string]::Concat('blob ', $bytes.Length, [char]0)
-    $header = [System.Text.Encoding]::ASCII.GetBytes($prefix)
+    $header = [System.Text.Encoding]::ASCII.GetBytes(('blob ' + [string]$bytes.Length))
 
-    $payload = New-Object byte[] ($header.Length + $bytes.Length)
+    $payload = New-Object byte[] ($header.Length + 1 + $bytes.Length)
     [System.Array]::Copy($header, 0, $payload, 0, $header.Length)
-    [System.Array]::Copy($bytes, 0, $payload, $header.Length, $bytes.Length)
+    $payload[$header.Length] = 0
+    [System.Array]::Copy($bytes, 0, $payload, $header.Length + 1, $bytes.Length)
 
     $sha1 = [System.Security.Cryptography.SHA1]::Create()
     try {
