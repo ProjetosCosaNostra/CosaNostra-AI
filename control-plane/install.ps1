@@ -1,5 +1,8 @@
 $ErrorActionPreference = 'Stop'
 
+# Harden this one PowerShell process against local script execution-policy blocks.
+try { Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass -Force -ErrorAction SilentlyContinue } catch {}
+
 $Repository = 'ProjetosCosaNostra/CosaNostra-AI'
 $StableRef = 'control-plane-stable'
 $Headers = @{ 'User-Agent' = 'BlackGold-ControlPlane/1.6' }
