@@ -1,0 +1,63 @@
+{
+  "schema": 1,
+  "ecosystem": "BlackGold",
+  "control_plane_repository": "ProjetosCosaNostra/CosaNostra-AI",
+  "policy_channel": "stable",
+  "repositories": [
+    {
+      "repository": "ProjetosCosaNostra/politica-de-privacidade",
+      "default_branch": "main",
+      "registered": true
+    },
+    {
+      "repository": "ProjetosCosaNostra/La_Famiglia_Links",
+      "default_branch": "gh-pages",
+      "registered": true
+    },
+    {
+      "repository": "ProjetosCosaNostra/CosaNostra-AI",
+      "default_branch": "main",
+      "registered": true
+    },
+    {
+      "repository": "ProjetosCosaNostra/MajestySpeak",
+      "default_branch": "main",
+      "registered": true
+    },
+    {
+      "repository": "ProjetosCosaNostra/Consigliere--Aladdin",
+      "default_branch": "main",
+      "registered": true
+    },
+    {
+      "repository": "ProjetosCosaNostra/BlackVault_Sentinel",
+      "default_branch": "main",
+      "registered": true
+    },
+    {
+      "repository": "ProjetosCosaNostra/FitNexus_Coach_BlackGold",
+      "default_branch": "main",
+      "registered": true
+    },
+    {
+      "repository": "ProjetosCosaNostra/Aeterna",
+      "default_branch": "main",
+      "registered": true
+    },
+    {
+      "repository": "ProjetosCosaNostra/BlackVault_Sentinel_Releases",
+      "default_branch": "main",
+      "registered": true
+    },
+    {
+      "repository": "ProjetosCosaNostra/Junior_Resolve",
+      "default_branch": "main",
+      "registered": true
+    }
+  ],
+  "required_markers": [
+    "AGENTS.md",
+    ".blackgold/control-plane.json"
+  ],
+  "future_repo_rule": "Every new BlackGold repository must receive both required markers and be added to this registry."
+}
