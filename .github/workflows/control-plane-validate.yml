@@ -1,0 +1,74 @@
+name: BlackGold Control Plane Validate
+
+on:
+  push:
+    paths:
+      - 'control-plane/**'
+      - '.github/workflows/control-plane-validate.yml'
+  pull_request:
+    paths:
+      - 'control-plane/**'
+      - '.github/workflows/control-plane-validate.yml'
+  workflow_dispatch:
+
+jobs:
+  validate:
+    runs-on: windows-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Validate required files and PowerShell syntax
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+
+          $required = @(
+            'control-plane/BLACKGOLD_CONTROL_PLANE.md',
+            'control-plane/manifest.json',
+            'control-plane/project-pointer.json',
+            'control-plane/policies/windows.json',
+            'control-plane/bootstrap.ps1',
+            'control-plane/Register-BlackGoldProjects.ps1',
+            'control-plane/Status-BlackGoldControl.ps1',
+            'control-plane/Repair-BlackGoldControl.ps1',
+            'control-plane/agent/BlackGold.Control.ps1',
+            'control-plane/agent/Register-BlackGoldControl.ps1',
+            'control-plane/agent/Uninstall-BlackGoldControl.ps1'
+          )
+
+          foreach ($path in $required) {
+            if (-not (Test-Path -LiteralPath $path)) {
+              throw "Required file missing: $path"
+            }
+          }
+
+          Get-Content 'control-plane/manifest.json' -Raw | ConvertFrom-Json | Out-Null
+          Get-Content 'control-plane/project-pointer.json' -Raw | ConvertFrom-Json | Out-Null
+          Get-Content 'control-plane/policies/windows.json' -Raw | ConvertFrom-Json | Out-Null
+
+          $scripts = Get-ChildItem 'control-plane' -Recurse -Filter '*.ps1' -File
+          foreach ($script in $scripts) {
+            $tokens = $null
+            $errors = $null
+            [System.Management.Automation.Language.Parser]::ParseFile(
+              $script.FullName,
+              [ref]$tokens,
+              [ref]$errors
+            ) | Out-Null
+
+            if ($errors.Count -gt 0) {
+              $errors | ForEach-Object { Write-Error ($script.FullName + ': ' + $_.Message) }
+              throw "PowerShell syntax validation failed: $($script.FullName)"
+            }
+          }
+
+          $manifest = Get-Content 'control-plane/manifest.json' -Raw | ConvertFrom-Json
+          if ($manifest.cmd_policy -ne 'hide_visible_cmd') {
+            throw 'cmd_policy must remain hide_visible_cmd'
+          }
+          if ($manifest.secrets_allowed -ne $false) {
+            throw 'secrets_allowed must remain false'
+          }
+
+          Write-Host "BLACKGOLD_CONTROL_PLANE_VALIDATION_PASS version=$($manifest.version)"
