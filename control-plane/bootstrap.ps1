@@ -1,6 +1,9 @@
 $ErrorActionPreference = 'Stop'
 $Base = 'https://raw.githubusercontent.com/ProjetosCosaNostra/CosaNostra-AI/main/control-plane'
 $InstallRoot = Join-Path $env:LOCALAPPDATA 'BlackGold\ControlPlane'
+$nonce = [DateTimeOffset]::UtcNow.ToUnixTimeSeconds()
+$latest = Invoke-RestMethod -UseBasicParsing -Uri ($Base + '/LATEST.json?t=' + $nonce)
+$Version = [string]$latest.version
 
 function Invoke-BGLocalScript {
     param([Parameter(Mandatory=$true)][string]$Path)
@@ -12,9 +15,12 @@ function Invoke-BGLocalScript {
 
 $files = @(
   'BLACKGOLD_CONTROL_PLANE.md',
+  'LATEST.json',
   'manifest.json',
   'project-pointer.json',
   'policies/windows.json',
+  'install.ps1',
+  'Update-BlackGoldControl.ps1',
   'agent/BlackGold.Control.ps1',
   'agent/Register-BlackGoldControl.ps1',
   'agent/Uninstall-BlackGoldControl.ps1',
@@ -28,7 +34,7 @@ New-Item -ItemType Directory -Force -Path $InstallRoot | Out-Null
 foreach ($relative in $files) {
     $target = Join-Path $InstallRoot ($relative -replace '/', '\')
     New-Item -ItemType Directory -Force -Path (Split-Path $target -Parent) | Out-Null
-    Invoke-WebRequest -UseBasicParsing -Uri ($Base + '/' + $relative + '?v=1.1.0') -OutFile $target
+    Invoke-WebRequest -UseBasicParsing -Uri ($Base + '/' + $relative + '?v=' + $Version + '&t=' + $nonce) -OutFile $target
     Unblock-File -LiteralPath $target -ErrorAction SilentlyContinue
 }
 
@@ -44,7 +50,7 @@ if (-not $task -and -not $runValue) {
     throw 'BlackGold Control Plane startup was not registered.'
 }
 
-Write-Output 'BLACKGOLD_CONTROL_PLANE_READY'
+Write-Output ('BLACKGOLD_CONTROL_PLANE_READY version=' + $Version)
 Write-Output ('InstallRoot=' + $InstallRoot)
 if ($task) { Write-Output ('Startup=ScheduledTask/' + $task.TaskName) }
 elseif ($runValue) { Write-Output 'Startup=HKCU/Run' }
