@@ -4,9 +4,11 @@
   "hide_visible_cmd": true,
   "kill_cmd_processes": false,
   "hide_powershell": false,
-  "poll_interval_ms": 250,
+  "trace_cmd_origin": true,
+  "poll_interval_ms": 100,
   "refresh_policy_seconds": 60,
   "log_retention_days": 7,
+  "self_heal_startup": true,
   "log_level": "info",
-  "notes": "CMD windows are hidden, never killed. This preserves build and automation subprocesses."
+  "notes": "Visible CMD windows are hidden, never killed. Origin process metadata is logged for root-cause diagnosis."
 }
