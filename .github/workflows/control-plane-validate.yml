@@ -78,6 +78,9 @@ jobs:
           if ($registry.registry_scope -ne 'public_discovery_only') {
             throw 'Public PROJECT_REGISTRY registry_scope must remain public_discovery_only'
           }
+          if ([string]$registry.control_plane_version -ne [string]$manifest.version) {
+            throw "Registry version mismatch: registry=$($registry.control_plane_version) manifest=$($manifest.version)"
+          }
 
           $scripts = Get-ChildItem 'control-plane' -Recurse -Filter '*.ps1' -File
           foreach ($script in $scripts) {
