@@ -1,0 +1,30 @@
+{
+  "schema": 1,
+  "system": "BlackGold Control Plane",
+  "channel": "stable",
+  "version": "1.3.0",
+  "state": "ACTIVE",
+  "canonical_repository": "ProjetosCosaNostra/CosaNostra-AI",
+  "canonical_path": "control-plane",
+  "permanent_installer": "control-plane/install.ps1",
+  "latest_descriptor": "control-plane/LATEST.json",
+  "project_registry": "control-plane/PROJECT_REGISTRY.json",
+  "agent_entrypoint": "control-plane/AGENT_ENTRYPOINT.md",
+  "windows_policy": {
+    "visible_cmd": "hide",
+    "kill_cmd": false,
+    "trace_origin": true,
+    "automatic_update": true,
+    "self_heal": true
+  },
+  "required_project_markers": [
+    "AGENTS.md",
+    ".blackgold/control-plane.json"
+  ],
+  "invariants": [
+    "Do not open visible CMD windows for ecosystem automation.",
+    "Do not kill required CMD build subprocesses just to hide their windows.",
+    "Use the canonical control plane instead of duplicating global execution rules.",
+    "New repositories must be registered in PROJECT_REGISTRY.json."
+  ]
+}
