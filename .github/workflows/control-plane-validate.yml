@@ -200,3 +200,9 @@ jobs:
         shell: pwsh
         run: |
           & ./tests/Test-GitHubRunnerTransport.ps1
+
+
+      - name: Validate ExecutionPolicy bootstrap hardening
+        shell: pwsh
+        run: |
+          & ./tests/Test-ExecutionPolicyBootstrap.ps1
