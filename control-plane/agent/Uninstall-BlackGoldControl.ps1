@@ -1,17 +1,24 @@
 $ErrorActionPreference = 'SilentlyContinue'
-$TaskName = 'BlackGold-ControlPlane'
-$UpdateTaskName = 'BlackGold-ControlPlane-Update'
+$TaskNames = @(
+  'BlackGold-ControlPlane',
+  'BlackGold-ControlPlane-Update',
+  'BlackGold-ControlPlane-Doctor'
+)
 $RunKey = 'HKCU:\Software\Microsoft\Windows\CurrentVersion\Run'
-$RunValue = 'BlackGold-ControlPlane'
-$UpdateRunValue = 'BlackGold-ControlPlane-Update'
+$RunValues = @(
+  'BlackGold-ControlPlane',
+  'BlackGold-ControlPlane-Update',
+  'BlackGold-ControlPlane-Doctor'
+)
 
-foreach ($name in @($TaskName,$UpdateTaskName)) {
+foreach ($name in $TaskNames) {
     Get-ScheduledTask -TaskName $name -ErrorAction SilentlyContinue | Stop-ScheduledTask -ErrorAction SilentlyContinue
     Unregister-ScheduledTask -TaskName $name -Confirm:$false -ErrorAction SilentlyContinue
 }
 
-Remove-ItemProperty -Path $RunKey -Name $RunValue -ErrorAction SilentlyContinue
-Remove-ItemProperty -Path $RunKey -Name $UpdateRunValue -ErrorAction SilentlyContinue
-[Environment]::SetEnvironmentVariable('BLACKGOLD_CONTROL_PLANE', $null, 'User')
+foreach ($name in $RunValues) {
+    Remove-ItemProperty -Path $RunKey -Name $name -ErrorAction SilentlyContinue
+}
 
-Write-Output 'BlackGold Control Plane startup and updater removed. Local files were preserved.'
+[Environment]::SetEnvironmentVariable('BLACKGOLD_CONTROL_PLANE', $null, 'User')
+Write-Output 'BlackGold Control Plane startup, updater and doctor removed. Local files were preserved.'
