@@ -111,6 +111,28 @@ jobs:
           if ($manifest.self_heal_doctor -ne $true) {
             throw 'self_heal_doctor must remain true'
           }
+          if ($manifest.runtime_reads_stable_branch_only -ne $true) {
+            throw 'runtime_reads_stable_branch_only must remain true'
+          }
+          if ($manifest.stable_branch -ne 'control-plane-stable') {
+            throw 'stable_branch must remain control-plane-stable'
+          }
+
+          $runtimeFiles = @(
+            'control-plane/install.ps1',
+            'control-plane/bootstrap.ps1',
+            'control-plane/Update-BlackGoldControl.ps1',
+            'control-plane/Repair-BlackGoldControl.ps1',
+            'control-plane/Doctor-BlackGoldControl.ps1',
+            'control-plane/Status-BlackGoldControl.ps1'
+          )
+
+          foreach ($runtimeFile in $runtimeFiles) {
+            $runtimeText = Get-Content $runtimeFile -Raw
+            if ($runtimeText -match 'ProjetosCosaNostra/CosaNostra-AI/main/control-plane') {
+              throw "Runtime file reads main instead of stable: $runtimeFile"
+            }
+          }
           if ($manifest.secrets_allowed -ne $false) {
             throw 'secrets_allowed must remain false'
           }
