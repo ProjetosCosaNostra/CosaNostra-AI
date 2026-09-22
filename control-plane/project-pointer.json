@@ -1,0 +1,13 @@
+{
+  "schema": 1,
+  "system": "BlackGold Control Plane",
+  "canonical_repository": "ProjetosCosaNostra/CosaNostra-AI",
+  "canonical_contract": "control-plane/BLACKGOLD_CONTROL_PLANE.md",
+  "manifest": "control-plane/manifest.json",
+  "global_rules": [
+    "Never open visible CMD windows for project automation.",
+    "Prefer hidden/background execution.",
+    "Do not duplicate central ecosystem configuration.",
+    "Consult the canonical control plane before changing local automation."
+  ]
+}
