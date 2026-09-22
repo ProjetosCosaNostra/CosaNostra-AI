@@ -10,6 +10,7 @@ $AgentPath = Join-Path $InstallRoot 'agent\BlackGold.Control.ps1'
 $ManifestPath = Join-Path $InstallRoot 'manifest.json'
 $InstallStatePath = Join-Path $InstallRoot 'install-state.json'
 $LogPath = Join-Path $InstallRoot 'logs\control-plane.log'
+$RunnerStatusPath = Join-Path $InstallRoot 'github-runner\Status-BlackGoldGitHubRunner.ps1'
 
 $TaskName = 'BlackGold-ControlPlane'
 $UpdateTaskName = 'BlackGold-ControlPlane-Update'
@@ -100,6 +101,21 @@ $transactionTimestamp = if ($transaction) { [string]$transaction.timestamp } els
 $commitMatch = [bool]($stableCommit -and $installedCommit -and ($stableCommit -eq $installedCommit))
 $integrityVerified = [bool]($installState -and $installState.integrity_verified)
 
+$runnerState = $null
+if (Test-Path -LiteralPath $RunnerStatusPath) {
+    try {
+        $runnerSource = Get-Content -LiteralPath $RunnerStatusPath -Raw -Encoding UTF8
+        $runnerOutput = & ([ScriptBlock]::Create($runnerSource)) | Out-String
+        if ($runnerOutput) { $runnerState = $runnerOutput | ConvertFrom-Json }
+    } catch {}
+}
+
+$remoteExecutionReady = [bool](
+    $runnerState -and
+    $runnerState.ready -and
+    ($runnerState.listener_running -or $runnerState.server_online)
+)
+
 $state = [ordered]@{
     ready = [bool]((Test-Path -LiteralPath $AgentPath) -and $manifest -and ($startup -ne 'none'))
     version = $localVersion
@@ -128,6 +144,10 @@ $state = [ordered]@{
     transaction_timestamp = $transactionTimestamp
     latest_log = $latestLog
     recent_cmd_origins = $recentCmdOrigins
+    github_runner_available = [bool]$runnerState
+    github_runner = $runnerState
+    remote_execution_ready = $remoteExecutionReady
+    desktop_commander_required = $false
 }
 
-$state | ConvertTo-Json -Depth 5
+$state | ConvertTo-Json -Depth 7

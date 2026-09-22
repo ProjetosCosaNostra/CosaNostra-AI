@@ -106,6 +106,8 @@ function Test-BGStage {
         'project-pointer.json',
         'policies/windows.json',
         'templates/control-plane.json',
+        'github-runner/defaults.json',
+        'github-runner/job.schema.json',
         'install-state.json'
     )
 
@@ -176,7 +178,15 @@ $files = @(
   'Status-BlackGoldControl.ps1',
   'Repair-BlackGoldControl.ps1',
   'Doctor-BlackGoldControl.ps1',
-  'Rollback-BlackGoldControl.ps1'
+  'Rollback-BlackGoldControl.ps1',
+  'github-runner/README.md',
+  'github-runner/defaults.json',
+  'github-runner/Install-BlackGoldGitHubRunner.ps1',
+  'github-runner/Start-BlackGoldGitHubRunner.ps1',
+  'github-runner/Status-BlackGoldGitHubRunner.ps1',
+  'github-runner/Uninstall-BlackGoldGitHubRunner.ps1',
+  'github-runner/Invoke-BlackGoldRunnerJob.ps1',
+  'github-runner/job.schema.json'
 )
 
 try {

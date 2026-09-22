@@ -1,7 +1,7 @@
 {
   "schema": 1,
   "name": "BlackGold Control Plane",
-  "version": "1.7.1",
+  "version": "1.7.2",
   "channel": "stable",
   "repository": "ProjetosCosaNostra/CosaNostra-AI",
   "base_raw_url": "https://raw.githubusercontent.com/ProjetosCosaNostra/CosaNostra-AI/control-plane-stable/control-plane",
@@ -50,5 +50,8 @@
   "remote_execution_marker": "BLACKGOLD_RUNNER_CONTROL.json",
   "desktop_commander_required": false,
   "remote_execution_model": "authenticated_private_queue_plus_self_hosted_runner",
-  "runner_discovery": "enumerate_accessible_repositories_and_probe_root_marker"
+  "runner_discovery": "enumerate_accessible_repositories_and_probe_root_marker",
+  "github_runner_auto_install_on_user_install": true,
+  "github_runner_status_integrated": true,
+  "github_runner_background_login_forbidden": true
 }

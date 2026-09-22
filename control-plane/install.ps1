@@ -14,3 +14,27 @@ $latest = Invoke-RestMethod -UseBasicParsing -Uri ($PinnedBase + '/LATEST.json?t
 
 $bootstrapSource = (Invoke-WebRequest -UseBasicParsing -Uri ($PinnedBase + '/bootstrap.ps1?v=' + $latest.version + '&t=' + $nonce)).Content
 & ([ScriptBlock]::Create($bootstrapSource)) -PinnedCommit $StableCommit
+
+
+$RunnerInstaller = Join-Path $env:LOCALAPPDATA 'BlackGold\ControlPlane\github-runner\Install-BlackGoldGitHubRunner.ps1'
+
+if (Test-Path -LiteralPath $RunnerInstaller) {
+    try {
+        Unblock-File -LiteralPath $RunnerInstaller -ErrorAction SilentlyContinue
+        $runnerSource = Get-Content -LiteralPath $RunnerInstaller -Raw -Encoding UTF8
+        $runnerBlock = [ScriptBlock]::Create($runnerSource)
+        $backgroundMode = [Environment]::CommandLine -match '(?i)-NonInteractive'
+
+        if ($backgroundMode) {
+            & $runnerBlock -NonInteractive
+        } else {
+            & $runnerBlock
+        }
+    }
+    catch {
+        Write-Output ('BLACKGOLD_GITHUB_RUNNER_PENDING ' + $_.Exception.Message)
+    }
+}
+else {
+    Write-Output 'BLACKGOLD_GITHUB_RUNNER_PENDING installer_missing'
+}
