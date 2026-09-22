@@ -118,3 +118,21 @@ Fluxo de integridade:
 Se um arquivo estiver vazio, alterado ou não corresponder ao blob esperado, a transação falha antes de tocar na instalação ativa.
 
 Essa verificação usa a identidade de objeto Git do repositório e HTTPS. Ela é uma checagem de integridade/content-addressing, não uma assinatura criptográfica independente.
+
+
+## Transporte local por GitHub Runner
+
+A partir da v1.7.0, o Ecossistema BlackGold possui um transporte oficial para execução local sem depender de Desktop Commander.
+
+O pacote canônico vive em:
+`control-plane/github-runner`
+
+O pacote:
+- usa o GitHub Actions Self-Hosted Runner oficial;
+- descobre o repositório privado de controle pelo marcador autenticado `BLACKGOLD_RUNNER_CONTROL.json`;
+- registra o runner nesse repositório;
+- inicia o listener escondido no logon;
+- restringe a execução a receitas controladas;
+- usa jobs privados e devolve resultados pelos logs do GitHub Actions.
+
+Desktop Commander pode existir como ferramenta auxiliar, mas nunca deve ser tratado como pré-requisito para continuar um projeto quando o GitHub Runner estiver disponível.

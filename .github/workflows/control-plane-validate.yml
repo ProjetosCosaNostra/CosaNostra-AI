@@ -49,7 +49,15 @@ jobs:
             'control-plane/Rollback-BlackGoldControl.ps1',
             'control-plane/agent/BlackGold.Control.ps1',
             'control-plane/agent/Register-BlackGoldControl.ps1',
-            'control-plane/agent/Uninstall-BlackGoldControl.ps1'
+            'control-plane/agent/Uninstall-BlackGoldControl.ps1',
+            'control-plane/github-runner/README.md',
+            'control-plane/github-runner/defaults.json',
+            'control-plane/github-runner/Install-BlackGoldGitHubRunner.ps1',
+            'control-plane/github-runner/Start-BlackGoldGitHubRunner.ps1',
+            'control-plane/github-runner/Status-BlackGoldGitHubRunner.ps1',
+            'control-plane/github-runner/Uninstall-BlackGoldGitHubRunner.ps1',
+            'control-plane/github-runner/Invoke-BlackGoldRunnerJob.ps1',
+            'control-plane/github-runner/job.schema.json'
           )
 
           foreach ($path in $required) {
@@ -186,3 +194,9 @@ jobs:
         shell: pwsh
         run: |
           & ./tests/Test-ControlPlaneIntegrity.ps1
+
+
+      - name: Validate GitHub Runner transport
+        shell: pwsh
+        run: |
+          & ./tests/Test-GitHubRunnerTransport.ps1

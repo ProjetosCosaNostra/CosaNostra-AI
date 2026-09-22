@@ -1,0 +1,16 @@
+{
+  "schema": 1,
+  "owner": "ProjetosCosaNostra",
+  "control_marker": "BLACKGOLD_RUNNER_CONTROL.json",
+  "runner_name": "BlackGold-FELIPE",
+  "labels": [
+    "blackgold",
+    "felipe",
+    "android"
+  ],
+  "runner_root": "E:\\BlackGold_GitHub_Runner",
+  "work_root": "E:\\_blackgold_runner_work",
+  "startup_task": "BlackGold-GitHubRunner",
+  "canonical_branch": "control-plane-stable",
+  "desktop_commander_required": false
+}
