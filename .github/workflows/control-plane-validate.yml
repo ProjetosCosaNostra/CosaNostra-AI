@@ -4,11 +4,13 @@ on:
   push:
     paths:
       - 'control-plane/**'
+      - 'tests/**'
       - '.github/workflows/control-plane-validate.yml'
       - '.github/workflows/control-plane-promote-stable.yml'
   pull_request:
     paths:
       - 'control-plane/**'
+      - 'tests/**'
       - '.github/workflows/control-plane-validate.yml'
       - '.github/workflows/control-plane-promote-stable.yml'
   workflow_dispatch:
