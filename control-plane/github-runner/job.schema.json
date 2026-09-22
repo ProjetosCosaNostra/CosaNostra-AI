@@ -2,18 +2,77 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "title": "BlackGold Runner Job",
   "type": "object",
-  "required": ["schema", "request_id", "op"],
+  "required": [
+    "schema",
+    "request_id",
+    "op"
+  ],
   "properties": {
-    "schema": { "const": 1 },
-    "request_id": { "type": "string", "minLength": 6, "maxLength": 128 },
-    "op": { "enum": ["status", "git_status", "git_sync", "gradle", "adb_devices", "adb_install", "adb_launch", "emulator_start", "logcat_tail"] },
-    "project_path": { "type": "string" },
-    "task": { "enum": ["assembleDebug", "test", "lint", "connectedDebugAndroidTest"] },
-    "apk_path": { "type": "string" },
-    "package": { "type": "string" },
-    "activity": { "type": "string" },
-    "avd": { "type": "string" },
-    "lines": { "type": "integer", "minimum": 10, "maximum": 2000 }
+    "schema": {
+      "const": 1
+    },
+    "request_id": {
+      "type": "string",
+      "minLength": 6,
+      "maxLength": 128
+    },
+    "op": {
+      "enum": [
+        "status",
+        "git_status",
+        "git_sync",
+        "gradle",
+        "adb_devices",
+        "adb_install",
+        "adb_launch",
+        "adb_launch_package",
+        "emulator_start",
+        "logcat_tail"
+      ]
+    },
+    "project_path": {
+      "type": "string"
+    },
+    "task": {
+      "enum": [
+        "assembleDebug",
+        "test",
+        "lint",
+        "connectedDebugAndroidTest"
+      ]
+    },
+    "apk_path": {
+      "type": "string"
+    },
+    "package": {
+      "type": "string"
+    },
+    "activity": {
+      "type": "string"
+    },
+    "avd": {
+      "type": "string"
+    },
+    "lines": {
+      "type": "integer",
+      "minimum": 10,
+      "maximum": 2000
+    },
+    "serial": {
+      "type": "string",
+      "pattern": "^emulator-\\d+$"
+    },
+    "port": {
+      "type": "integer",
+      "minimum": 5554,
+      "maximum": 5682,
+      "multipleOf": 2
+    },
+    "wait_boot_sec": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 600
+    }
   },
   "additionalProperties": false
 }

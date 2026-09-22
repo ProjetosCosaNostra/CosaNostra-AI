@@ -13,6 +13,24 @@ function Assert-EPath([string]$Path) {
     return $full
 }
 
+function Assert-Serial([string]$Serial) {
+    if (-not $Serial) { return '' }
+    if ($Serial -notmatch '^emulator-\d+$') { throw 'Invalid emulator serial.' }
+    return $Serial
+}
+
+function Get-Adb {
+    $adb = Join-Path $env:LOCALAPPDATA 'Android\Sdk\platform-tools\adb.exe'
+    if (-not (Test-Path -LiteralPath $adb)) { throw 'adb.exe not found.' }
+    return $adb
+}
+
+function Get-Emulator {
+    $emulator = Join-Path $env:LOCALAPPDATA 'Android\Sdk\emulator\emulator.exe'
+    if (-not (Test-Path -LiteralPath $emulator)) { throw 'emulator.exe not found.' }
+    return $emulator
+}
+
 function Invoke-Hidden {
     param(
         [Parameter(Mandatory=$true)][string]$FileName,
@@ -59,6 +77,41 @@ function Invoke-Hidden {
     }
 }
 
+function Get-AvdName {
+    param(
+        [Parameter(Mandatory=$true)][string]$Adb,
+        [Parameter(Mandatory=$true)][string]$Serial
+    )
+
+    $r = Invoke-Hidden -FileName $Adb -Arguments ('-s ' + $Serial + ' emu avd name') -WorkingDirectory (Split-Path $Adb -Parent) -TimeoutSec 30
+    if ($r.exit_code -ne 0) { return '' }
+
+    $lines = @(([string]$r.stdout -split '[\r\n]+') | Where-Object { $_ -and $_.Trim() -ne 'OK' })
+    if ($lines.Count -lt 1) { return '' }
+    return ([string]$lines[0]).Trim()
+}
+
+function Find-AvdSerial {
+    param(
+        [Parameter(Mandatory=$true)][string]$Adb,
+        [Parameter(Mandatory=$true)][string]$Avd
+    )
+
+    $devices = Invoke-Hidden -FileName $Adb -Arguments 'devices' -WorkingDirectory (Split-Path $Adb -Parent) -TimeoutSec 30
+    if ($devices.exit_code -ne 0) { return '' }
+
+    foreach ($line in ([string]$devices.stdout -split '[\r\n]+')) {
+        if ($line -match '^(emulator-\d+)\s+device$') {
+            $candidate = $matches[1]
+            if ((Get-AvdName -Adb $Adb -Serial $candidate) -eq $Avd) {
+                return $candidate
+            }
+        }
+    }
+
+    return ''
+}
+
 if (-not (Test-Path -LiteralPath $JobFile)) {
     throw ('Job file not found: ' + $JobFile)
 }
@@ -68,6 +121,7 @@ $job = Get-Content -LiteralPath $JobFile -Raw -Encoding UTF8 | ConvertFrom-Json
 if ([int]$job.schema -ne 1) { throw 'Unsupported job schema.' }
 $requestId = [string]$job.request_id
 $op = [string]$job.op
+$serial = Assert-Serial ([string]$job.serial)
 
 $result = $null
 
@@ -116,8 +170,7 @@ switch ($op) {
     }
 
     'adb_devices' {
-        $adb = Join-Path $env:LOCALAPPDATA 'Android\Sdk\platform-tools\adb.exe'
-        if (-not (Test-Path -LiteralPath $adb)) { throw 'adb.exe not found.' }
+        $adb = Get-Adb
         $r = Invoke-Hidden -FileName $adb -Arguments 'devices -l' -WorkingDirectory (Split-Path $adb -Parent)
         $result = [ordered]@{ request_id=$requestId; op=$op; process=$r }
     }
@@ -127,11 +180,10 @@ switch ($op) {
         if (-not $apk.EndsWith('.apk',[System.StringComparison]::OrdinalIgnoreCase)) { throw 'apk_path must be .apk' }
         if (-not (Test-Path -LiteralPath $apk)) { throw 'APK not found.' }
 
-        $adb = Join-Path $env:LOCALAPPDATA 'Android\Sdk\platform-tools\adb.exe'
-        if (-not (Test-Path -LiteralPath $adb)) { throw 'adb.exe not found.' }
-
-        $r = Invoke-Hidden -FileName $adb -Arguments ('install -r "' + $apk + '"') -WorkingDirectory (Split-Path $adb -Parent)
-        $result = [ordered]@{ request_id=$requestId; op=$op; apk_path=$apk; process=$r }
+        $adb = Get-Adb
+        $prefix = if ($serial) { '-s ' + $serial + ' ' } else { '' }
+        $r = Invoke-Hidden -FileName $adb -Arguments ($prefix + 'install -r "' + $apk + '"') -WorkingDirectory (Split-Path $adb -Parent)
+        $result = [ordered]@{ request_id=$requestId; op=$op; serial=$serial; apk_path=$apk; process=$r }
     }
 
     'adb_launch' {
@@ -141,29 +193,104 @@ switch ($op) {
         if ($package -notmatch '^[A-Za-z0-9_.]+$') { throw 'Invalid package.' }
         if ($activity -notmatch '^[A-Za-z0-9_.$]+$') { throw 'Invalid activity.' }
 
-        $adb = Join-Path $env:LOCALAPPDATA 'Android\Sdk\platform-tools\adb.exe'
-        if (-not (Test-Path -LiteralPath $adb)) { throw 'adb.exe not found.' }
+        $adb = Get-Adb
+        $prefix = if ($serial) { '-s ' + $serial + ' ' } else { '' }
+        $r = Invoke-Hidden -FileName $adb -Arguments ($prefix + 'shell am start -n ' + $package + '/' + $activity) -WorkingDirectory (Split-Path $adb -Parent)
+        $result = [ordered]@{ request_id=$requestId; op=$op; serial=$serial; package=$package; activity=$activity; process=$r }
+    }
 
-        $r = Invoke-Hidden -FileName $adb -Arguments ('shell am start -n ' + $package + '/' + $activity) -WorkingDirectory (Split-Path $adb -Parent)
-        $result = [ordered]@{ request_id=$requestId; op=$op; package=$package; activity=$activity; process=$r }
+    'adb_launch_package' {
+        $package = [string]$job.package
+        if ($package -notmatch '^[A-Za-z0-9_.]+$') { throw 'Invalid package.' }
+
+        $adb = Get-Adb
+        $prefix = if ($serial) { '-s ' + $serial + ' ' } else { '' }
+        $r = Invoke-Hidden -FileName $adb -Arguments ($prefix + 'shell monkey -p ' + $package + ' -c android.intent.category.LAUNCHER 1') -WorkingDirectory (Split-Path $adb -Parent)
+        $result = [ordered]@{ request_id=$requestId; op=$op; serial=$serial; package=$package; process=$r }
     }
 
     'emulator_start' {
         $avd = [string]$job.avd
         if ($avd -notmatch '^[A-Za-z0-9_.-]+$') { throw 'Invalid AVD name.' }
 
-        $emulator = Join-Path $env:LOCALAPPDATA 'Android\Sdk\emulator\emulator.exe'
-        if (-not (Test-Path -LiteralPath $emulator)) { throw 'emulator.exe not found.' }
+        $port = [int]$job.port
+        if ($port -ne 0) {
+            if ($port -lt 5554 -or $port -gt 5682 -or ($port % 2) -ne 0) {
+                throw 'Invalid emulator port.'
+            }
+            $serial = 'emulator-' + $port
+        }
 
-        $psi = New-Object System.Diagnostics.ProcessStartInfo
-        $psi.FileName = $emulator
-        $psi.Arguments = '-avd ' + $avd
-        $psi.UseShellExecute = $false
-        $psi.CreateNoWindow = $true
-        $psi.WindowStyle = [System.Diagnostics.ProcessWindowStyle]::Hidden
-        [System.Diagnostics.Process]::Start($psi) | Out-Null
+        $waitBootSec = [int]$job.wait_boot_sec
+        if ($waitBootSec -lt 1) { $waitBootSec = 240 }
+        if ($waitBootSec -gt 600) { $waitBootSec = 600 }
 
-        $result = [ordered]@{ request_id=$requestId; op=$op; avd=$avd; started=$true }
+        $adb = Get-Adb
+        $emulator = Get-Emulator
+        Invoke-Hidden -FileName $adb -Arguments 'start-server' -WorkingDirectory (Split-Path $adb -Parent) -TimeoutSec 30 | Out-Null
+
+        $existingSerial = if ($serial) { $serial } else { Find-AvdSerial -Adb $adb -Avd $avd }
+        $state = ''
+        if ($existingSerial) {
+            $stateResult = Invoke-Hidden -FileName $adb -Arguments ('-s ' + $existingSerial + ' get-state') -WorkingDirectory (Split-Path $adb -Parent) -TimeoutSec 15
+            if ($stateResult.exit_code -eq 0) { $state = ([string]$stateResult.stdout).Trim() }
+        }
+
+        if ($state -eq 'device') {
+            $actualAvd = Get-AvdName -Adb $adb -Serial $existingSerial
+            if ($actualAvd -ne $avd) {
+                throw ('Target serial is occupied by another AVD. expected=' + $avd + ' actual=' + $actualAvd + ' serial=' + $existingSerial)
+            }
+        }
+        else {
+            $args = '-avd ' + $avd + ' -netdelay none -netspeed full -no-boot-anim'
+            if ($port -ne 0) { $args += ' -port ' + $port }
+
+            $psi = New-Object System.Diagnostics.ProcessStartInfo
+            $psi.FileName = $emulator
+            $psi.Arguments = $args
+            $psi.UseShellExecute = $false
+            $psi.CreateNoWindow = $true
+            $psi.WindowStyle = [System.Diagnostics.ProcessWindowStyle]::Hidden
+            [System.Diagnostics.Process]::Start($psi) | Out-Null
+        }
+
+        $deadline = (Get-Date).AddSeconds($waitBootSec)
+        $boot = ''
+        do {
+            Start-Sleep -Seconds 3
+
+            if (-not $serial) {
+                $serial = Find-AvdSerial -Adb $adb -Avd $avd
+            }
+
+            if ($serial) {
+                $stateResult = Invoke-Hidden -FileName $adb -Arguments ('-s ' + $serial + ' get-state') -WorkingDirectory (Split-Path $adb -Parent) -TimeoutSec 15
+                if ($stateResult.exit_code -eq 0 -and ([string]$stateResult.stdout).Trim() -eq 'device') {
+                    $bootResult = Invoke-Hidden -FileName $adb -Arguments ('-s ' + $serial + ' shell getprop sys.boot_completed') -WorkingDirectory (Split-Path $adb -Parent) -TimeoutSec 15
+                    if ($bootResult.exit_code -eq 0) { $boot = ([string]$bootResult.stdout).Trim() }
+                    if ($boot -eq '1') { break }
+                }
+            }
+        } while ((Get-Date) -lt $deadline)
+
+        if (-not $serial) { throw ('AVD not found after start: ' + $avd) }
+        if ($boot -ne '1') { throw ('AVD boot timeout: ' + $serial) }
+
+        $actualAvd = Get-AvdName -Adb $adb -Serial $serial
+        if ($actualAvd -ne $avd) {
+            throw ('AVD identity mismatch. expected=' + $avd + ' actual=' + $actualAvd + ' serial=' + $serial)
+        }
+
+        $result = [ordered]@{
+            request_id=$requestId
+            op=$op
+            avd=$avd
+            port=$port
+            serial=$serial
+            boot_completed=$true
+            started=$true
+        }
     }
 
     'logcat_tail' {
@@ -171,11 +298,10 @@ switch ($op) {
         if ($lines -lt 10) { $lines = 200 }
         if ($lines -gt 2000) { $lines = 2000 }
 
-        $adb = Join-Path $env:LOCALAPPDATA 'Android\Sdk\platform-tools\adb.exe'
-        if (-not (Test-Path -LiteralPath $adb)) { throw 'adb.exe not found.' }
-
-        $r = Invoke-Hidden -FileName $adb -Arguments ('logcat -d -t ' + $lines) -WorkingDirectory (Split-Path $adb -Parent)
-        $result = [ordered]@{ request_id=$requestId; op=$op; lines=$lines; process=$r }
+        $adb = Get-Adb
+        $prefix = if ($serial) { '-s ' + $serial + ' ' } else { '' }
+        $r = Invoke-Hidden -FileName $adb -Arguments ($prefix + 'logcat -d -t ' + $lines) -WorkingDirectory (Split-Path $adb -Parent)
+        $result = [ordered]@{ request_id=$requestId; op=$op; serial=$serial; lines=$lines; process=$r }
     }
 
     default {
