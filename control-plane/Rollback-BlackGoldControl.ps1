@@ -33,7 +33,7 @@ if (-not (Test-Path -LiteralPath $previousManifest)) {
 $previous = Get-Content -LiteralPath $previousManifest -Raw -Encoding UTF8 | ConvertFrom-Json
 Write-BGTransaction 'rollback_started' ('target=' + [string]$previous.version)
 
-foreach ($taskName in @('BlackGold-ControlPlane','BlackGold-ControlPlane-Update','BlackGold-ControlPlane-Doctor')) {
+foreach ($taskName in @('BlackGold-ControlPlane','BlackGold-ControlPlane-Update','BlackGold-ControlPlane-Doctor','BlackGold-GitHubRunner-Doctor')) {
     Get-ScheduledTask -TaskName $taskName -ErrorAction SilentlyContinue | Stop-ScheduledTask -ErrorAction SilentlyContinue
 }
 
