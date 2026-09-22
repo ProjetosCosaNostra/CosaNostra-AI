@@ -29,5 +29,10 @@
   ],
   "registered_repository_count": 10,
   "github_markers_synced": true,
-  "discovery_model": "AGENTS.md + .blackgold/control-plane.json + central PROJECT_REGISTRY.json"
+  "discovery_model": "AGENTS.md + .blackgold/control-plane.json + central PROJECT_REGISTRY.json",
+  "security": {
+    "public_registry_private_repository_names_omitted": true,
+    "authenticated_private_registry_available": true,
+    "public_files_must_not_expose_private_repository_names": true
+  }
 }
