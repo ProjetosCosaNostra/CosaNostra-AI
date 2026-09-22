@@ -15,10 +15,15 @@ function Invoke-BGLocalScript {
 
 $files = @(
   'BLACKGOLD_CONTROL_PLANE.md',
+  'AGENT_ENTRYPOINT.md',
+  'CURRENT_TRUTH.json',
+  'PROJECT_REGISTRY.json',
   'LATEST.json',
   'manifest.json',
   'project-pointer.json',
   'policies/windows.json',
+  'templates/AGENTS.md',
+  'templates/control-plane.json',
   'install.ps1',
   'Update-BlackGoldControl.ps1',
   'agent/BlackGold.Control.ps1',
