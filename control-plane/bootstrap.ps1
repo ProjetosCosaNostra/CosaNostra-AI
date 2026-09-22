@@ -18,6 +18,7 @@ $files = @(
   'AGENT_ENTRYPOINT.md',
   'CURRENT_TRUTH.json',
   'PROJECT_REGISTRY.json',
+  'security/PUBLIC_PRIVATE_DATA_BOUNDARY.md',
   'LATEST.json',
   'manifest.json',
   'project-pointer.json',
