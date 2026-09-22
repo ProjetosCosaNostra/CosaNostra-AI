@@ -2,6 +2,14 @@ $ErrorActionPreference = 'Stop'
 $Base = 'https://raw.githubusercontent.com/ProjetosCosaNostra/CosaNostra-AI/main/control-plane'
 $InstallRoot = Join-Path $env:LOCALAPPDATA 'BlackGold\ControlPlane'
 
+function Invoke-BGLocalScript {
+    param([Parameter(Mandatory=$true)][string]$Path)
+    if (-not (Test-Path -LiteralPath $Path)) { throw "BlackGold script not found: $Path" }
+    Unblock-File -LiteralPath $Path -ErrorAction SilentlyContinue
+    $source = Get-Content -LiteralPath $Path -Raw -Encoding UTF8
+    & ([ScriptBlock]::Create($source))
+}
+
 $files = @(
   'BLACKGOLD_CONTROL_PLANE.md',
   'manifest.json',
@@ -13,16 +21,23 @@ $files = @(
   'Register-BlackGoldProjects.ps1'
 )
 
+New-Item -ItemType Directory -Force -Path $InstallRoot | Out-Null
+
 foreach ($relative in $files) {
     $target = Join-Path $InstallRoot ($relative -replace '/', '\')
-    $dir = Split-Path $target -Parent
-    New-Item -ItemType Directory -Force -Path $dir | Out-Null
+    New-Item -ItemType Directory -Force -Path (Split-Path $target -Parent) | Out-Null
     Invoke-WebRequest -UseBasicParsing -Uri ($Base + '/' + $relative) -OutFile $target
+    Unblock-File -LiteralPath $target -ErrorAction SilentlyContinue
 }
 
 [Environment]::SetEnvironmentVariable('BLACKGOLD_CONTROL_PLANE', $InstallRoot, 'User')
-& (Join-Path $InstallRoot 'agent\Register-BlackGoldControl.ps1')
-& (Join-Path $InstallRoot 'Register-BlackGoldProjects.ps1')
+
+Invoke-BGLocalScript (Join-Path $InstallRoot 'agent\Register-BlackGoldControl.ps1')
+Invoke-BGLocalScript (Join-Path $InstallRoot 'Register-BlackGoldProjects.ps1')
+
+$task = Get-ScheduledTask -TaskName 'BlackGold-ControlPlane' -ErrorAction SilentlyContinue
+if (-not $task) { throw 'BlackGold Control Plane task was not registered.' }
 
 Write-Output 'BLACKGOLD_CONTROL_PLANE_READY'
 Write-Output ('InstallRoot=' + $InstallRoot)
+Write-Output ('Task=' + $task.TaskName)
