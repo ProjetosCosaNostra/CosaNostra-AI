@@ -2,13 +2,15 @@ $ErrorActionPreference = 'SilentlyContinue'
 $TaskNames = @(
   'BlackGold-ControlPlane',
   'BlackGold-ControlPlane-Update',
-  'BlackGold-ControlPlane-Doctor'
+  'BlackGold-ControlPlane-Doctor',
+  'BlackGold-GitHubRunner-Doctor'
 )
 $RunKey = 'HKCU:\Software\Microsoft\Windows\CurrentVersion\Run'
 $RunValues = @(
   'BlackGold-ControlPlane',
   'BlackGold-ControlPlane-Update',
-  'BlackGold-ControlPlane-Doctor'
+  'BlackGold-ControlPlane-Doctor',
+  'BlackGold-GitHubRunner-Doctor'
 )
 
 foreach ($name in $TaskNames) {
