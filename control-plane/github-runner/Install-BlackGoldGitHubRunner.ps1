@@ -117,11 +117,110 @@ function Invoke-Hidden {
     }
 }
 
+
+function Try-GhAuthFromGitCredential([string]$Gh) {
+    $git = Get-Command git.exe -ErrorAction SilentlyContinue
+    if (-not $git) { return $false }
+
+    $oldInteractive = $env:GCM_INTERACTIVE
+    $env:GCM_INTERACTIVE = 'Never'
+
+    try {
+        $credPsi = New-Object System.Diagnostics.ProcessStartInfo
+        $credPsi.FileName = $git.Source
+        $credPsi.Arguments = 'credential fill'
+        $credPsi.UseShellExecute = $false
+        $credPsi.CreateNoWindow = $true
+        $credPsi.WindowStyle = [System.Diagnostics.ProcessWindowStyle]::Hidden
+        $credPsi.RedirectStandardInput = $true
+        $credPsi.RedirectStandardOutput = $true
+        $credPsi.RedirectStandardError = $true
+
+        $cred = New-Object System.Diagnostics.Process
+        $cred.StartInfo = $credPsi
+
+        if (-not $cred.Start()) { return $false }
+
+        $cred.StandardInput.WriteLine('protocol=https')
+        $cred.StandardInput.WriteLine('host=github.com')
+        $cred.StandardInput.WriteLine('')
+        $cred.StandardInput.Close()
+
+        $credOut = $cred.StandardOutput.ReadToEnd()
+        $cred.StandardError.ReadToEnd() | Out-Null
+        $cred.WaitForExit()
+
+        if ($cred.ExitCode -ne 0) { return $false }
+
+        $tokenLine = @(
+            ($credOut -split '[\r\n]+') |
+            Where-Object { $_ -like 'password=*' } |
+            Select-Object -First 1
+        )
+
+        if (-not $tokenLine) { return $false }
+
+        $token = ([string]$tokenLine) -replace '^password=',''
+        if ([string]::IsNullOrWhiteSpace($token)) { return $false }
+
+        $authPsi = New-Object System.Diagnostics.ProcessStartInfo
+        $authPsi.FileName = $Gh
+        $authPsi.Arguments = 'auth login --hostname github.com --git-protocol https --with-token'
+        $authPsi.UseShellExecute = $false
+        $authPsi.CreateNoWindow = $true
+        $authPsi.WindowStyle = [System.Diagnostics.ProcessWindowStyle]::Hidden
+        $authPsi.RedirectStandardInput = $true
+        $authPsi.RedirectStandardOutput = $true
+        $authPsi.RedirectStandardError = $true
+
+        $auth = New-Object System.Diagnostics.Process
+        $auth.StartInfo = $authPsi
+
+        if (-not $auth.Start()) {
+            $token = $null
+            return $false
+        }
+
+        $auth.StandardInput.WriteLine($token)
+        $auth.StandardInput.Close()
+        $token = $null
+
+        $auth.StandardOutput.ReadToEnd() | Out-Null
+        $auth.StandardError.ReadToEnd() | Out-Null
+        $auth.WaitForExit()
+
+        if ($auth.ExitCode -ne 0) { return $false }
+
+        try {
+            Invoke-Gh -Gh $Gh -Arguments @('auth','status','--hostname','github.com') | Out-Null
+            return $true
+        }
+        catch {
+            return $false
+        }
+    }
+    catch {
+        return $false
+    }
+    finally {
+        if ($oldInteractive -ne $null) {
+            $env:GCM_INTERACTIVE = $oldInteractive
+        } else {
+            Remove-Item Env:GCM_INTERACTIVE -ErrorAction SilentlyContinue
+        }
+    }
+}
+
 function Ensure-GhAuth([string]$Gh) {
     try {
         Invoke-Gh -Gh $Gh -Arguments @('auth','status','--hostname','github.com') | Out-Null
         return
     } catch {}
+
+    if (Try-GhAuthFromGitCredential -Gh $Gh) {
+        Write-Step 'GitHub authentication recovered from local Git Credential Manager.'
+        return
+    }
 
     if ($NonInteractive) {
         throw 'BLACKGOLD_RUNNER_AUTH_REQUIRED'
