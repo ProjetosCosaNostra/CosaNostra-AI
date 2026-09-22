@@ -3,6 +3,7 @@ $ErrorActionPreference = 'Stop'
 $RunnerRoot = 'E:\BlackGold_GitHub_Runner'
 $StatePath = Join-Path $RunnerRoot 'BLACKGOLD_RUNNER_STATE.json'
 $TaskName = 'BlackGold-GitHubRunner'
+$WatchdogTaskName = 'BlackGold-GitHubRunner-Watchdog'
 $ConfigCmd = Join-Path $RunnerRoot 'config.cmd'
 
 $state = $null
@@ -11,7 +12,9 @@ if (Test-Path -LiteralPath $StatePath) {
 }
 
 Get-ScheduledTask -TaskName $TaskName -ErrorAction SilentlyContinue | Stop-ScheduledTask -ErrorAction SilentlyContinue
+Get-ScheduledTask -TaskName $WatchdogTaskName -ErrorAction SilentlyContinue | Stop-ScheduledTask -ErrorAction SilentlyContinue
 Unregister-ScheduledTask -TaskName $TaskName -Confirm:$false -ErrorAction SilentlyContinue
+Unregister-ScheduledTask -TaskName $WatchdogTaskName -Confirm:$false -ErrorAction SilentlyContinue
 Get-Process -Name 'Runner.Listener' -ErrorAction SilentlyContinue | Stop-Process -Force -ErrorAction SilentlyContinue
 
 if ($state -and $state.control_repository -and (Test-Path -LiteralPath $ConfigCmd) -and (Test-Path -LiteralPath (Join-Path $RunnerRoot '.runner'))) {
