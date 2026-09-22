@@ -1,5 +1,6 @@
 param(
-    [string]$Owner = 'ProjetosCosaNostra'
+    [string]$Owner = 'ProjetosCosaNostra',
+    [switch]$NonInteractive
 )
 
 $ErrorActionPreference = 'Stop'
@@ -121,6 +122,10 @@ function Ensure-GhAuth([string]$Gh) {
         Invoke-Gh -Gh $Gh -Arguments @('auth','status','--hostname','github.com') | Out-Null
         return
     } catch {}
+
+    if ($NonInteractive) {
+        throw 'BLACKGOLD_RUNNER_AUTH_REQUIRED'
+    }
 
     Write-Host ''
     Write-Host 'BLACKGOLD_RUNNER_GITHUB_LOGIN'
