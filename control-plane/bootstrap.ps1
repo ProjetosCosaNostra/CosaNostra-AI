@@ -18,7 +18,9 @@ $files = @(
   'agent/BlackGold.Control.ps1',
   'agent/Register-BlackGoldControl.ps1',
   'agent/Uninstall-BlackGoldControl.ps1',
-  'Register-BlackGoldProjects.ps1'
+  'Register-BlackGoldProjects.ps1',
+  'Status-BlackGoldControl.ps1',
+  'Repair-BlackGoldControl.ps1'
 )
 
 New-Item -ItemType Directory -Force -Path $InstallRoot | Out-Null
@@ -26,7 +28,7 @@ New-Item -ItemType Directory -Force -Path $InstallRoot | Out-Null
 foreach ($relative in $files) {
     $target = Join-Path $InstallRoot ($relative -replace '/', '\')
     New-Item -ItemType Directory -Force -Path (Split-Path $target -Parent) | Out-Null
-    Invoke-WebRequest -UseBasicParsing -Uri ($Base + '/' + $relative) -OutFile $target
+    Invoke-WebRequest -UseBasicParsing -Uri ($Base + '/' + $relative + '?v=1.1.0') -OutFile $target
     Unblock-File -LiteralPath $target -ErrorAction SilentlyContinue
 }
 
@@ -46,3 +48,5 @@ Write-Output 'BLACKGOLD_CONTROL_PLANE_READY'
 Write-Output ('InstallRoot=' + $InstallRoot)
 if ($task) { Write-Output ('Startup=ScheduledTask/' + $task.TaskName) }
 elseif ($runValue) { Write-Output 'Startup=HKCU/Run' }
+
+Invoke-BGLocalScript (Join-Path $InstallRoot 'Status-BlackGoldControl.ps1')
