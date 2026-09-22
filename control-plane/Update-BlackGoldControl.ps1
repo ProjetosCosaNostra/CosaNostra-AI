@@ -1,5 +1,6 @@
 $ErrorActionPreference = 'Stop'
-$Base = 'https://raw.githubusercontent.com/ProjetosCosaNostra/CosaNostra-AI/main/control-plane'
+$StableRef = 'control-plane-stable'
+$Base = 'https://raw.githubusercontent.com/ProjetosCosaNostra/CosaNostra-AI/' + $StableRef + '/control-plane'
 $InstallRoot = Join-Path $env:LOCALAPPDATA 'BlackGold\ControlPlane'
 $LocalManifestPath = Join-Path $InstallRoot 'manifest.json'
 $nonce = [DateTimeOffset]::UtcNow.ToUnixTimeSeconds()
