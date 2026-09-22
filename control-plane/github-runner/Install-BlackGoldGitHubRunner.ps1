@@ -9,6 +9,7 @@ $RunnerName = 'BlackGold-FELIPE'
 $RunnerRoot = 'E:\BlackGold_GitHub_Runner'
 $WorkRoot = 'E:\_blackgold_runner_work'
 $TaskName = 'BlackGold-GitHubRunner'
+$WatchdogTaskName = 'BlackGold-GitHubRunner-Watchdog'
 $Labels = 'blackgold,felipe,android'
 $ControlMarker = 'BLACKGOLD_RUNNER_CONTROL.json'
 $CanonicalBase = 'https://raw.githubusercontent.com/ProjetosCosaNostra/CosaNostra-AI/control-plane-stable/control-plane/github-runner'
@@ -361,6 +362,7 @@ else {
 
 foreach ($name in @(
     'Start-BlackGoldGitHubRunner.ps1',
+    'Watchdog-BlackGoldGitHubRunner.ps1',
     'Status-BlackGoldGitHubRunner.ps1',
     'Uninstall-BlackGoldGitHubRunner.ps1'
 )) {
@@ -369,15 +371,26 @@ foreach ($name in @(
 }
 
 $startScript = Join-Path $RunnerRoot 'Start-BlackGoldGitHubRunner.ps1'
+$watchdogScript = Join-Path $RunnerRoot 'Watchdog-BlackGoldGitHubRunner.ps1'
 
-Write-Step 'Registering hidden startup task.'
+Write-Step 'Registering hidden startup task and watchdog.'
 $action = New-ScheduledTaskAction -Execute 'powershell.exe' -Argument ('-NoProfile -NonInteractive -ExecutionPolicy Bypass -WindowStyle Hidden -File "' + $startScript + '"')
 $trigger = New-ScheduledTaskTrigger -AtLogOn -User $env:USERNAME
 $settings = New-ScheduledTaskSettingsSet -StartWhenAvailable -ExecutionTimeLimit ([TimeSpan]::Zero) -MultipleInstances IgnoreNew -RestartCount 999 -RestartInterval (New-TimeSpan -Minutes 1)
 $principal = New-ScheduledTaskPrincipal -UserId $env:USERNAME -LogonType Interactive -RunLevel Limited
 
 Register-ScheduledTask -TaskName $TaskName -Action $action -Trigger $trigger -Settings $settings -Principal $principal -Force | Out-Null
+
+$watchdogAction = New-ScheduledTaskAction -Execute 'powershell.exe' -Argument ('-NoProfile -NonInteractive -ExecutionPolicy Bypass -WindowStyle Hidden -File "' + $watchdogScript + '"')
+$watchdogTriggers = @(
+    (New-ScheduledTaskTrigger -AtLogOn -User $env:USERNAME),
+    (New-ScheduledTaskTrigger -Once -At (Get-Date).AddMinutes(1) -RepetitionInterval (New-TimeSpan -Minutes 2) -RepetitionDuration (New-TimeSpan -Days 3650))
+)
+$watchdogSettings = New-ScheduledTaskSettingsSet -StartWhenAvailable -ExecutionTimeLimit (New-TimeSpan -Minutes 2) -MultipleInstances IgnoreNew
+Register-ScheduledTask -TaskName $WatchdogTaskName -Action $watchdogAction -Trigger $watchdogTriggers -Settings $watchdogSettings -Principal $principal -Force | Out-Null
+
 Start-ScheduledTask -TaskName $TaskName
+Start-ScheduledTask -TaskName $WatchdogTaskName
 
 $localState = [ordered]@{
     schema = 1
@@ -391,6 +404,8 @@ $localState = [ordered]@{
     runner_root = $RunnerRoot
     work_root = $WorkRoot
     task_name = $TaskName
+    watchdog_task_name = $WatchdogTaskName
+    watchdog_interval_minutes = 2
     installed_at = (Get-Date).ToString('o')
     desktop_commander_required = $false
 }
@@ -420,9 +435,13 @@ for ($i = 0; $i -lt 10; $i++) {
 
 $listener = Get-Process -Name 'Runner.Listener' -ErrorAction SilentlyContinue | Select-Object -First 1
 $task = Get-ScheduledTask -TaskName $TaskName -ErrorAction SilentlyContinue
+$watchdogTask = Get-ScheduledTask -TaskName $WatchdogTaskName -ErrorAction SilentlyContinue
 
 if (-not $task) {
     throw 'Runner startup task was not created.'
+}
+if (-not $watchdogTask) {
+    throw 'Runner watchdog task was not created.'
 }
 
 Write-Host ''
@@ -431,6 +450,7 @@ Write-Host ('ControlRepository=' + $ControlRepo)
 Write-Host ('Runner=' + $RunnerName)
 Write-Host ('Version=' + $version)
 Write-Host ('Startup=' + $TaskName)
+Write-Host ('Watchdog=' + $WatchdogTaskName)
 Write-Host ('ListenerRunning=' + [bool]$listener)
 Write-Host ('ServerStatus=' + $serverStatus)
 Write-Host 'DesktopCommanderRequired=False'
