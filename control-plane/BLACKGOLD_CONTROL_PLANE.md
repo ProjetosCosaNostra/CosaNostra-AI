@@ -61,3 +61,19 @@ Ao trabalhar em qualquer projeto BlackGold, procurar primeiro por:
 3. este contrato canônico no GitHub
 
 Alterações locais não devem reintroduzir CMD visível nem substituir a fonte central de regras.
+
+
+## Canal estável validado
+
+O runtime do Windows não consome a branch `main` diretamente.
+
+A branch `control-plane-stable` contém somente commits promovidos depois de validação completa.
+
+Fluxo:
+1. desenvolvimento ocorre em branch de trabalho;
+2. CI valida PowerShell, JSON, invariantes e coerência de versão;
+3. a mudança é mesclada na `main`;
+4. somente após o CI da `main` concluir com sucesso, o commit é promovido para `control-plane-stable`;
+5. instalação, update, reparo, status e Doctor leem apenas `control-plane-stable`.
+
+Isso elimina downloads de versões parcialmente atualizadas.

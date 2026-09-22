@@ -38,3 +38,10 @@ Quando inventário completo for realmente necessário e houver um conector GitHu
 `BLACKGOLD_PRIVATE_PROJECT_REGISTRY.json`
 
 Use esse inventário apenas dentro do contexto autenticado. Não copie nomes privados para arquivos públicos do Control Plane.
+
+
+## Regra de release
+
+Não desenvolver mudanças do Control Plane diretamente no canal estável.
+
+Use branch de trabalho, valide, mescle na `main` e só então promova o commit validado para `control-plane-stable`. O runtime local deve ler apenas o canal estável.

@@ -13,7 +13,8 @@ $RunValueName = 'BlackGold-ControlPlane'
 $UpdateRunValueName = 'BlackGold-ControlPlane-Update'
 $DoctorRunValueName = 'BlackGold-ControlPlane-Doctor'
 
-$Base = 'https://raw.githubusercontent.com/ProjetosCosaNostra/CosaNostra-AI/main/control-plane'
+$StableRef = 'control-plane-stable'
+$Base = 'https://raw.githubusercontent.com/ProjetosCosaNostra/CosaNostra-AI/' + $StableRef + '/control-plane'
 
 $manifest = $null
 if (Test-Path -LiteralPath $ManifestPath) {

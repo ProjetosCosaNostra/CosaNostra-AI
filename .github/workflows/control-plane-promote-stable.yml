@@ -1,0 +1,35 @@
+name: BlackGold Control Plane Promote Stable
+
+on:
+  workflow_run:
+    workflows:
+      - "BlackGold Control Plane Validate"
+    types:
+      - completed
+
+permissions:
+  contents: write
+
+jobs:
+  promote:
+    if: >
+      github.event.workflow_run.conclusion == 'success' &&
+      github.event.workflow_run.head_branch == 'main'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout exact validated commit
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.workflow_run.head_sha }}
+          fetch-depth: 0
+
+      - name: Promote exact validated commit
+        shell: bash
+        run: |
+          set -euo pipefail
+          git push origin HEAD:refs/heads/control-plane-stable
+
+      - name: Report promotion
+        shell: bash
+        run: |
+          echo "BLACKGOLD_STABLE_PROMOTED sha=${{ github.event.workflow_run.head_sha }}"
