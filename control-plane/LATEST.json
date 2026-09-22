@@ -1,0 +1,9 @@
+{
+  "schema": 1,
+  "channel": "stable",
+  "version": "1.2.0",
+  "repository": "ProjetosCosaNostra/CosaNostra-AI",
+  "bootstrap_url": "https://raw.githubusercontent.com/ProjetosCosaNostra/CosaNostra-AI/main/control-plane/bootstrap.ps1",
+  "install_url": "https://raw.githubusercontent.com/ProjetosCosaNostra/CosaNostra-AI/main/control-plane/install.ps1",
+  "manifest_url": "https://raw.githubusercontent.com/ProjetosCosaNostra/CosaNostra-AI/main/control-plane/manifest.json"
+}
