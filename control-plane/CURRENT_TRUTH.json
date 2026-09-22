@@ -2,7 +2,7 @@
   "schema": 1,
   "system": "BlackGold Control Plane",
   "channel": "stable",
-  "version": "1.7.3",
+  "version": "1.7.4",
   "state": "ACTIVE",
   "canonical_repository": "ProjetosCosaNostra/CosaNostra-AI",
   "canonical_path": "control-plane",
@@ -68,6 +68,9 @@
     "background_login_forbidden": true,
     "activation_rule": "Permanent installer installs Control Plane first, then activates the GitHub Runner. Background repair never opens interactive GitHub login.",
     "android_targeting": "explicit_serial_optional_port_verified_avd",
-    "package_launcher": "adb_monkey_launcher_category"
+    "package_launcher": "adb_monkey_launcher_category",
+    "doctor_self_heal": true,
+    "git_credential_recovery": true,
+    "background_activation": "Updater invokes Doctor; Doctor attempts noninteractive Runner registration using existing local GitHub/Git credentials."
   }
 }
