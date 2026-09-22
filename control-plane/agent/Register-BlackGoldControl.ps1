@@ -14,10 +14,11 @@ $registered = $false
 try {
     $action = New-ScheduledTaskAction -Execute 'powershell.exe' -Argument $AgentArgs
     $trigger = New-ScheduledTaskTrigger -AtLogOn -User $env:USERNAME
-    $settings = New-ScheduledTaskSettingsSet -StartWhenAvailable -ExecutionTimeLimit ([TimeSpan]::Zero) -MultipleInstances IgnoreNew
+    $settings = New-ScheduledTaskSettingsSet -StartWhenAvailable -ExecutionTimeLimit ([TimeSpan]::Zero) -MultipleInstances IgnoreNew -RestartCount 999 -RestartInterval (New-TimeSpan -Minutes 1)
     $principal = New-ScheduledTaskPrincipal -UserId $env:USERNAME -LogonType Interactive -RunLevel Limited
 
     Register-ScheduledTask -TaskName $TaskName -Action $action -Trigger $trigger -Settings $settings -Principal $principal -Force | Out-Null
+    Remove-ItemProperty -Path $RunKey -Name $RunValue -ErrorAction SilentlyContinue
     Start-ScheduledTask -TaskName $TaskName
     $registered = $true
     Write-Output "BlackGold Control Plane startup: ScheduledTask/$TaskName"
