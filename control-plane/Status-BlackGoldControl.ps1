@@ -14,15 +14,17 @@ $LogPath = Join-Path $InstallRoot 'logs\control-plane.log'
 $TaskName = 'BlackGold-ControlPlane'
 $UpdateTaskName = 'BlackGold-ControlPlane-Update'
 $DoctorTaskName = 'BlackGold-ControlPlane-Doctor'
+$RunnerDoctorTaskName = 'BlackGold-GitHubRunner-Doctor'
 
 $RunKey = 'HKCU:\Software\Microsoft\Windows\CurrentVersion\Run'
 $RunValueName = 'BlackGold-ControlPlane'
 $UpdateRunValueName = 'BlackGold-ControlPlane-Update'
 $DoctorRunValueName = 'BlackGold-ControlPlane-Doctor'
+$RunnerDoctorRunValueName = 'BlackGold-GitHubRunner-Doctor'
 
 $Repository = 'ProjetosCosaNostra/CosaNostra-AI'
 $StableRef = 'control-plane-stable'
-$Headers = @{ 'User-Agent' = 'BlackGold-ControlPlane/1.6' }
+$Headers = @{ 'User-Agent' = 'BlackGold-ControlPlane/1.7' }
 
 $manifest = $null
 if (Test-Path -LiteralPath $ManifestPath) {
@@ -48,10 +50,12 @@ if (Test-Path -LiteralPath $TransactionPath) {
 $task = Get-ScheduledTask -TaskName $TaskName -ErrorAction SilentlyContinue
 $updateTask = Get-ScheduledTask -TaskName $UpdateTaskName -ErrorAction SilentlyContinue
 $doctorTask = Get-ScheduledTask -TaskName $DoctorTaskName -ErrorAction SilentlyContinue
+$runnerDoctorTask = Get-ScheduledTask -TaskName $RunnerDoctorTaskName -ErrorAction SilentlyContinue
 
 $runValue = Get-ItemPropertyValue -Path $RunKey -Name $RunValueName -ErrorAction SilentlyContinue
 $updateRunValue = Get-ItemPropertyValue -Path $RunKey -Name $UpdateRunValueName -ErrorAction SilentlyContinue
 $doctorRunValue = Get-ItemPropertyValue -Path $RunKey -Name $DoctorRunValueName -ErrorAction SilentlyContinue
+$runnerDoctorRunValue = Get-ItemPropertyValue -Path $RunKey -Name $RunnerDoctorRunValueName -ErrorAction SilentlyContinue
 
 $agentProcess = Get-CimInstance Win32_Process -Filter "Name = 'powershell.exe'" -ErrorAction SilentlyContinue |
     Where-Object { $_.CommandLine -and $_.CommandLine -like '*BlackGold.Control.ps1*' } |
@@ -66,6 +70,45 @@ function Resolve-Startup($Task,$RunValue) {
 $startup = Resolve-Startup $task $runValue
 $updateStartup = Resolve-Startup $updateTask $updateRunValue
 $doctorStartup = Resolve-Startup $doctorTask $doctorRunValue
+$runnerDoctorStartup = Resolve-Startup $runnerDoctorTask $runnerDoctorRunValue
+
+$runnerRoots = New-Object System.Collections.Generic.List[string]
+$runnerBase = Join-Path $env:LOCALAPPDATA 'GitHubActionsRunner'
+if (Test-Path -LiteralPath $runnerBase) {
+    $queue = New-Object System.Collections.Queue
+    $queue.Enqueue(@($runnerBase,0))
+    $runnerSeen = @{}
+    while ($queue.Count -gt 0) {
+        $item = $queue.Dequeue()
+        $dir = [string]$item[0]
+        $depth = [int]$item[1]
+        $config = Join-Path $dir '.runner'
+        $listener = Join-Path $dir 'bin\Runner.Listener.exe'
+        if ((Test-Path -LiteralPath $config) -and (Test-Path -LiteralPath $listener)) {
+            if (-not $runnerSeen.ContainsKey($dir)) {
+                $runnerSeen[$dir] = $true
+                $runnerRoots.Add($dir)
+            }
+        }
+        if ($depth -lt 3) {
+            Get-ChildItem -LiteralPath $dir -Directory -Force -ErrorAction SilentlyContinue | ForEach-Object {
+                $queue.Enqueue(@($_.FullName,$depth + 1))
+            }
+        }
+    }
+}
+
+$activeRunnerCount = 0
+foreach ($runnerRoot in @($runnerRoots)) {
+    $listener = [System.IO.Path]::GetFullPath((Join-Path $runnerRoot 'bin\Runner.Listener.exe'))
+    $active = Get-CimInstance Win32_Process -Filter "Name = 'Runner.Listener.exe'" -ErrorAction SilentlyContinue |
+        Where-Object {
+            $_.ExecutablePath -and
+            ([System.IO.Path]::GetFullPath([string]$_.ExecutablePath) -eq $listener)
+        } |
+        Select-Object -First 1
+    if ($active) { $activeRunnerCount++ }
+}
 
 $remoteVersion = 'unknown'
 $stableCommit = ''
@@ -116,6 +159,10 @@ $state = [ordered]@{
     startup = $startup
     updater = $updateStartup
     doctor = $doctorStartup
+    github_runner_doctor = $runnerDoctorStartup
+    github_runner_self_heal = [bool]($manifest -and $manifest.github_runner_self_heal)
+    github_runner_configured_count = $runnerRoots.Count
+    github_runner_active_count = $activeRunnerCount
     agent_running = [bool]$agentProcess
     agent_pid = if ($agentProcess) { [int]$agentProcess.ProcessId } else { $null }
     transactional_install = [bool]($manifest -and $manifest.transactional_install)
