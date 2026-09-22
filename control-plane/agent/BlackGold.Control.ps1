@@ -7,12 +7,11 @@ New-Item -ItemType Directory -Force -Path $LogDir | Out-Null
 
 Add-Type @"
 using System;
-using System.Text;
 using System.Runtime.InteropServices;
 public static class BGWin32 {
     public delegate bool EnumWindowsProc(IntPtr hWnd, IntPtr lParam);
     [DllImport("user32.dll")] public static extern bool EnumWindows(EnumWindowsProc cb, IntPtr lp);
-    [DllImport("user32.dll")] public static extern uint GetWindowThreadProcessId(IntPtr hWnd, out uint pid);
+    [DllImport("user32.dll")] public static extern uint GetWindowThreadProcessId(IntPtr hWnd, out uint processId);
     [DllImport("user32.dll")] public static extern bool IsWindowVisible(IntPtr hWnd);
     [DllImport("user32.dll")] public static extern bool ShowWindowAsync(IntPtr hWnd, int nCmdShow);
 }
@@ -43,15 +42,18 @@ while ($true) {
         [BGWin32]::EnumWindows({
             param($hWnd, $lParam)
             if (-not [BGWin32]::IsWindowVisible($hWnd)) { return $true }
-            [uint32]$pid = 0
-            [BGWin32]::GetWindowThreadProcessId($hWnd, [ref]$pid) | Out-Null
+
+            [uint32]$windowProcessId = 0
+            [BGWin32]::GetWindowThreadProcessId($hWnd, [ref]$windowProcessId) | Out-Null
+
             try {
-                $p = Get-Process -Id $pid -ErrorAction Stop
-                if ($p.ProcessName -ieq 'cmd') {
+                $proc = Get-Process -Id $windowProcessId -ErrorAction Stop
+                if ($proc.ProcessName -ieq 'cmd') {
                     [BGWin32]::ShowWindowAsync($hWnd, 0) | Out-Null
-                    Write-BGLog ("hidden-cmd pid=" + $pid)
+                    Write-BGLog ("hidden-cmd pid=" + $windowProcessId)
                 }
             } catch {}
+
             return $true
         }, [IntPtr]::Zero) | Out-Null
     }
