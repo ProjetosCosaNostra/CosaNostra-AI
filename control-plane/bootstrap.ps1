@@ -176,6 +176,7 @@ $files = @(
   'Status-BlackGoldControl.ps1',
   'Repair-BlackGoldControl.ps1',
   'Doctor-BlackGoldControl.ps1',
+  'Repair-GitHubActionsRunners.ps1',
   'Rollback-BlackGoldControl.ps1'
 )
 
@@ -238,7 +239,7 @@ try {
     Write-BGTransaction 'staged_integrity_verified' ('Verified files=' + $verifiedCount)
     Write-BGTransaction 'staged_validated' 'All staged files passed integrity and structural validation.'
 
-    foreach ($taskName in @('BlackGold-ControlPlane','BlackGold-ControlPlane-Update','BlackGold-ControlPlane-Doctor')) {
+    foreach ($taskName in @('BlackGold-ControlPlane','BlackGold-ControlPlane-Update','BlackGold-ControlPlane-Doctor','BlackGold-GitHubRunner-Doctor')) {
         Get-ScheduledTask -TaskName $taskName -ErrorAction SilentlyContinue | Stop-ScheduledTask -ErrorAction SilentlyContinue
     }
 
@@ -297,7 +298,7 @@ catch {
     Write-BGTransaction 'failed' $errorMessage
 
     if ($swapped) {
-        foreach ($taskName in @('BlackGold-ControlPlane','BlackGold-ControlPlane-Update','BlackGold-ControlPlane-Doctor')) {
+        foreach ($taskName in @('BlackGold-ControlPlane','BlackGold-ControlPlane-Update','BlackGold-ControlPlane-Doctor','BlackGold-GitHubRunner-Doctor')) {
             Get-ScheduledTask -TaskName $taskName -ErrorAction SilentlyContinue | Stop-ScheduledTask -ErrorAction SilentlyContinue
         }
 
