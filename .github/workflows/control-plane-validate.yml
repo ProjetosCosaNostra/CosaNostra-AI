@@ -41,6 +41,7 @@ jobs:
             'control-plane/Register-BlackGoldProjects.ps1',
             'control-plane/Status-BlackGoldControl.ps1',
             'control-plane/Repair-BlackGoldControl.ps1',
+            'control-plane/Doctor-BlackGoldControl.ps1',
             'control-plane/agent/BlackGold.Control.ps1',
             'control-plane/agent/Register-BlackGoldControl.ps1',
             'control-plane/agent/Uninstall-BlackGoldControl.ps1'
@@ -106,6 +107,9 @@ jobs:
           }
           if ($manifest.project_registry_enabled -ne $true) {
             throw 'project_registry_enabled must remain true'
+          }
+          if ($manifest.self_heal_doctor -ne $true) {
+            throw 'self_heal_doctor must remain true'
           }
           if ($manifest.secrets_allowed -ne $false) {
             throw 'secrets_allowed must remain false'
